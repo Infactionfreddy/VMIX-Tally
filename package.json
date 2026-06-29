@@ -1,0 +1,20 @@
+{
+  "name": "vmix-atem-tally-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "vMix → ATEM tally bridge: reads vMix live/preview tally and drives ATEM program/preview bus for SDI camera tally distribution.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}
