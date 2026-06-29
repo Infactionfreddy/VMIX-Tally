@@ -132,6 +132,71 @@ describe("SC3/CORE-04/D-04/D-05/D-06 — lowest ATEM number wins when multiple i
 });
 
 // ---------------------------------------------------------------------------
+// CR-01 / D-06 cross-field consistency — contended must never contradict cameras
+// Regression for the verification BLOCKER: a "lost-bus" row is "absent from the
+// clean tally map" (D-06), so it must NEVER name a camera that the final map
+// shows as program/preview. A live-program loser that recovers tally on the
+// preview bus is the canonical trigger.
+// ---------------------------------------------------------------------------
+
+describe("CR-01/D-06 — contended never lists a camera that has tally in the final map", () => {
+  it("CR-01: live-program loser that wins the preview bus is NOT reported as lost-bus", () => {
+    // camA + camB both live-program (camA wins, atemSource 1 < 2); camB is also
+    // force-preview, so it recovers tally on the preview bus → "preview", green.
+    const result = resolve(
+      [1, 1, 0, 0],
+      baseMapping,
+      [{ cameraId: "camB", force: "preview" }],
+    );
+    // camB visibly has green tally...
+    expect(result.cameras["camB"]).toBe("preview");
+    expect(result.bus.preview).toBe(2);
+    expect(result.cameras["camA"]).toBe("program");
+    // ...so it must NOT also appear as "lost-bus" (the old self-contradiction).
+    expect(
+      result.contended.some(
+        (c) => c.reason === "lost-bus" && c.atemSource === 2,
+      ),
+    ).toBe(false);
+    // camB lost the program bus but recovered preview → contended is fully clean here.
+    expect(result.contended).toEqual([]);
+  });
+
+  it("CR-01 invariant: no camera that is non-off in `cameras` appears as lost-bus in `contended`", () => {
+    // Exercise a spread of program/preview/override collisions and assert the
+    // cross-field invariant holds for every contended lost-bus row.
+    const scenarios: ReadonlyArray<{
+      tally: number[];
+      overrides: OverrideEntry[];
+    }> = [
+      { tally: [1, 1, 0, 0], overrides: [{ cameraId: "camB", force: "preview" }] },
+      { tally: [1, 1, 1, 0], overrides: [{ cameraId: "camC", force: "preview" }] },
+      { tally: [1, 1, 2, 0], overrides: [{ cameraId: "camB", force: "preview" }] },
+      {
+        tally: [1, 1, 0, 0],
+        overrides: [
+          { cameraId: "camA", force: "program" },
+          { cameraId: "camB", force: "preview" },
+        ],
+      },
+    ];
+    const sourceToCamera = new Map(
+      baseMapping.map((m) => [m.atemSource, m.cameraId]),
+    );
+    for (const { tally, overrides } of scenarios) {
+      const result = resolve(tally, baseMapping, overrides);
+      for (const c of result.contended) {
+        if (c.reason !== "lost-bus" || c.atemSource === null) continue;
+        const camId = sourceToCamera.get(c.atemSource);
+        if (camId === undefined) continue;
+        // The defect being guarded: a "lost-bus" camera must be "off" in the map.
+        expect(result.cameras[camId]).toBe("off");
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // D-07 — force-off override
 // ---------------------------------------------------------------------------
 

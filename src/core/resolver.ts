@@ -117,6 +117,16 @@ function makeEmptyOutput(mapping: MappingEntry[]): ResolverOutput {
   return { cameras, bus: { program: null, preview: null }, contended: [] };
 }
 
+/**
+ * Internal-only contended entry that also carries the originating cameraId for
+ * "lost-bus" rows. The public ContendedInput contract has no cameraId, so this
+ * is stripped at the return site (Step 5). The cameraId lets Step 5 reconcile
+ * `contended` against the FINAL per-camera map: a camera that lost the program
+ * bus but recovered tally on the preview bus must NOT be reported as "lost-bus"
+ * (D-06 — "lost-bus" means absent from the clean tally map, i.e. finally "off").
+ */
+type PendingContended = ContendedInput & { cameraId?: CameraId };
+
 // ---------------------------------------------------------------------------
 // Main resolver
 // ---------------------------------------------------------------------------
@@ -181,7 +191,7 @@ export function resolve(
   // — so an oversized 1000-padded tally cannot drive unbounded output work (D-13, T-02-01).
   const liveProgramEntries: MappingEntry[] = [];
   const livePreviewEntries: MappingEntry[] = [];
-  const contended: ContendedInput[] = [];
+  const contended: PendingContended[] = [];
 
   for (const entry of safeMapping) {
     const raw = safeTally[entry.vmixInput - 1]; // 1-based vmixInput → 0-based array
@@ -247,6 +257,7 @@ export function resolve(
             vmixInputNumber: entry.vmixInput,
             reason: "lost-bus",
             atemSource: src,
+            cameraId: camId,
           });
         }
       }
@@ -280,6 +291,7 @@ export function resolve(
             vmixInputNumber: e.vmixInput,
             reason: "lost-bus",
             atemSource: e.atemSource,
+            cameraId: e.cameraId,
           });
         }
       }
@@ -293,6 +305,7 @@ export function resolve(
           vmixInputNumber: e.vmixInput,
           reason: "lost-bus",
           atemSource: e.atemSource,
+          cameraId: e.cameraId,
         });
       }
     }
@@ -372,11 +385,28 @@ export function resolve(
   }
 
   // ---------------------------------------------------------------------------
-  // Step 5: Return (D-11 covered: empty/all-zero tally → bus null/null, all off)
-  // ---------------------------------------------------------------------------
+  // Step 5: Reconcile contended against the FINAL camera map, then return.
+  //
+  // A "lost-bus" row means "this live input is absent from the clean tally map"
+  // (D-06). But a camera that lost the program bus can still recover tally on the
+  // preview bus (e.g. live-program loser that is also force-preview) — it ends up
+  // "preview" in `cameras`, so it is NOT absent and must not appear as "lost-bus".
+  // Drop any "lost-bus" row whose camera is non-"off" in the final map, then strip
+  // the internal cameraId to honor the public ContendedInput contract.
+  // "unmapped" rows (no cameraId) are always preserved (D-10).
+  const reconciledContended: ContendedInput[] = contended
+    .filter(
+      (c) =>
+        c.reason !== "lost-bus" ||
+        c.cameraId === undefined ||
+        cameras[c.cameraId] === "off",
+    )
+    .map(({ cameraId: _cameraId, ...row }) => row);
+
+  // D-11 covered: empty/all-zero tally → bus null/null, all off.
   return {
     cameras,
     bus: { program: busProgram, preview: busPreview },
-    contended,
+    contended: reconciledContended,
   };
 }
