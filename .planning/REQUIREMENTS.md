@@ -84,34 +84,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | TBD | Pending |
-| CORE-02 | TBD | Pending |
-| CORE-03 | TBD | Pending |
-| CORE-04 | TBD | Pending |
-| CFG-01 | TBD | Pending |
-| CFG-02 | TBD | Pending |
-| MAP-01 | TBD | Pending |
-| VMIX-01 | TBD | Pending |
-| VMIX-02 | TBD | Pending |
-| VMIX-03 | TBD | Pending |
-| VMIX-04 | TBD | Pending |
-| ATEM-01 | TBD | Pending |
-| ATEM-02 | TBD | Pending |
-| ATEM-03 | TBD | Pending |
-| ATEM-04 | TBD | Pending |
-| VERIFY-01 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| REL-01 | TBD | Pending |
+| CORE-01 | Phase 1 | Pending |
+| CORE-02 | Phase 1 | Pending |
+| CORE-03 | Phase 1 | Pending |
+| CORE-04 | Phase 1 | Pending |
+| CFG-01 | Phase 2 | Pending |
+| CFG-02 | Phase 2 | Pending |
+| MAP-01 | Phase 2 | Pending |
+| VMIX-01 | Phase 3 | Pending |
+| VMIX-02 | Phase 3 | Pending |
+| VMIX-03 | Phase 3 | Pending |
+| ATEM-01 | Phase 4 | Pending |
+| ATEM-02 | Phase 4 | Pending |
+| ATEM-03 | Phase 4 | Pending |
+| VERIFY-01 | Phase 4 | Pending |
+| REL-01 | Phase 4 | Pending |
+| VMIX-04 | Phase 5 | Pending |
+| ATEM-04 | Phase 5 | Pending |
+| UI-01 | Phase 6 | Pending |
+| UI-02 | Phase 6 | Pending |
+| UI-03 | Phase 6 | Pending |
+| UI-04 | Phase 6 | Pending |
+| UI-05 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total
-- Mapped to phases: 0 (filled by roadmap)
-- Unmapped: 22 ⚠️
+- Mapped to phases: 22
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-29*
-*Last updated: 2026-06-29 after initial definition*
+*Last updated: 2026-06-29 after roadmap creation (traceability mapped)*
