@@ -32,7 +32,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Only the main PGM/PVW input drives tally; overlay/PiP/multi-program states are mirrored per-input with program-wins precedence, never collapsed to one input.
   4. The reconciler emits an ATEM command only when desired differs from last-sent (idempotent diff), proven by a no-op-on-unchanged test.
   5. Canonical state models every camera as exactly one of off / program / preview.
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 01-01-PLAN.md — Project foundation (strict-TS ESM + vitest) + typed output contract (per-camera map, ATEM bus, contended sidecar)
+- [ ] 01-02-PLAN.md — Keystone resolver: full precedence chain (override→live-program→preview→off, lowest-ATEM-# arbitration) + exhaustive D-04..D-13 tests
+- [ ] 01-03-PLAN.md — Single-writer diff reconciler (last-sent ownership, no-op-on-unchanged, per-field change report)
 
 ### Phase 2: Config Persistence + Mapping Model
 **Goal**: vMix/ATEM connection settings and the vMix-input → ATEM-input mapping survive restarts, anchored to stable identities rather than volatile string positions.
@@ -104,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Resolver + Tally State Spine | 0/TBD | Not started | - |
+| 1. Core Resolver + Tally State Spine | 0/3 | Planned | - |
 | 2. Config Persistence + Mapping Model | 0/TBD | Not started | - |
 | 3. vMix Live Ingest | 0/TBD | Not started | - |
 | 4. ATEM Output + Walk-Test | 0/TBD | Not started | - |
