@@ -23,10 +23,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Tally Core
 
-- [ ] **CORE-01**: Server hält ein kanonisches Soll-Tally-Zustandsmodell pro Kamera (off / program / preview)
-- [ ] **CORE-02**: Server löst den finalen Tally-Zustand mit Vorrang live → mapping → manueller Override auf
-- [ ] **CORE-03**: Server sendet einen ATEM-Befehl nur, wenn der Soll- vom Ist-Zustand abweicht (Single-Writer-Reconciler)
-- [ ] **CORE-04**: Nur der Haupt-PGM/PVW-Eingang treibt Tally — Overlay-/PiP-Zustände werden ignoriert
+- [x] **CORE-01**: Server hält ein kanonisches Soll-Tally-Zustandsmodell pro Kamera (off / program / preview)
+- [x] **CORE-02**: Server löst den finalen Tally-Zustand mit Vorrang live → mapping → manueller Override auf
+- [x] **CORE-03**: Server sendet einen ATEM-Befehl nur, wenn der Soll- vom Ist-Zustand abweicht (Single-Writer-Reconciler)
+- [x] **CORE-04**: Nur der Haupt-PGM/PVW-Eingang treibt Tally — Overlay-/PiP-Zustände werden ignoriert
 
 ### Mapping & Config
 
@@ -84,10 +84,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 1 | Pending |
-| CORE-02 | Phase 1 | Pending |
-| CORE-03 | Phase 1 | Pending |
-| CORE-04 | Phase 1 | Pending |
+| CORE-01 | Phase 1 | Complete |
+| CORE-02 | Phase 1 | Complete |
+| CORE-03 | Phase 1 | Complete |
+| CORE-04 | Phase 1 | Complete |
 | CFG-01 | Phase 2 | Pending |
 | CFG-02 | Phase 2 | Pending |
 | MAP-01 | Phase 2 | Pending |
