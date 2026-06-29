@@ -395,7 +395,7 @@ The Phase 2 zod schema is the **upstream gate** at the persistence boundary. Rec
 | A4 | `console.error`/injected-logger is sufficient for D-12 "log loudly" (no `pino` yet in Phase 2) | Supporting libs | Low — Claude's-discretion area; an injected logger keeps the store testable and dependency-free. |
 | A5 | Adding an optional `version: 1` field now is harmless and future-proofs migrations | Pattern 3 | Low — explicitly Claude's discretion (D); `.optional()` means old files without it still validate. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Config file location** (Claude's discretion in CONTEXT)
    - What we know: ARCHITECTURE.md specifies `config.json` at project root (cwd).
