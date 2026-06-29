@@ -68,8 +68,8 @@ Wenn vMix einen Input live schaltet, leuchtet an genau der richtigen Blackmagic-
 | Server steuert ATEM-Program/Preview-Bus aktiv mit | Einzige Möglichkeit, per-Kamera-Tally über SDI zu erzeugen; ATEM leitet Tally aus seinen Bussen ab | — Pending |
 | vMix-Zustand über TCP-API (Push) statt HTTP-Polling | Latenzarm, erfüllt <100 ms-Anforderung | — Pending |
 | Node.js als Server-Plattform | Reife Libraries (`atem-connection`), WebSocket-UI, plattformübergreifend | — Pending |
-| Nur Haupt-PGM-Tally, kein Overlay/PiP | Hält v1 einfach; Overlay-Logik als spätere Erweiterung | — Pending |
-| Rot + Grün (Live + Preview) Tally | Vollständige Tally-Abbildung wie vom Operator erwartet | — Pending |
+| Nur Haupt-PGM-Tally, kein Overlay/PiP | Hält v1 einfach; Overlay-Logik als spätere Erweiterung | ✓ Im Resolver umgesetzt (Phase 1, CORE-04): Overlay/PiP-Quellen landen im `contended`-Sidecar, treiben kein Tally |
+| Rot + Grün (Live + Preview) Tally | Vollständige Tally-Abbildung wie vom Operator erwartet | ✓ Im Resolver umgesetzt (Phase 1, CORE-01): jede Kamera ist genau off/program/preview, program gewinnt bei Kollision (D-12) |
 
 ## Evolution
 
@@ -89,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-29 after initialization*
+*Last updated: 2026-06-29 after Phase 1 (Core Resolver + Tally State Spine) complete — pure desired-state engine landed; end-to-end capabilities still await the I/O phases (2–3) before any Active requirement can move to Validated.*
