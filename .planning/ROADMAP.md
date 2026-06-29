@@ -12,7 +12,7 @@ Build a single-process Node.js bridge that mirrors vMix's live/preview state ont
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Core Resolver + Tally State Spine** - Pure desired-state resolver (live → mapping → override) with single-writer diff reconciler, no I/O
+- [x] **Phase 1: Core Resolver + Tally State Spine** - Pure desired-state resolver (live → mapping → override) with single-writer diff reconciler, no I/O (completed 2026-06-29)
 - [ ] **Phase 2: Config Persistence + Mapping Model** - Persisted vMix/ATEM settings and identity-anchored vMix→ATEM input mapping (≤8)
 - [ ] **Phase 3: vMix Live Ingest** - TCP SUBSCRIBE TALLY push client, defensive parser, stable input-identity resolution
 - [ ] **Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)** - Cut-only ATEM bus control driving real red/green tally, walk-test verification, <100 ms latency proven
@@ -34,8 +34,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. Canonical state models every camera as exactly one of off / program / preview.
 **Plans**: 3 plans
 - [x] 01-01-PLAN.md — Project foundation (strict-TS ESM + vitest) + typed output contract (per-camera map, ATEM bus, contended sidecar)
-- [ ] 01-02-PLAN.md — Keystone resolver: full precedence chain (override→live-program→preview→off, lowest-ATEM-# arbitration) + exhaustive D-04..D-13 tests
-- [ ] 01-03-PLAN.md — Single-writer diff reconciler (last-sent ownership, no-op-on-unchanged, per-field change report)
+- [x] 01-02-PLAN.md — Keystone resolver: full precedence chain (override→live-program→preview→off, lowest-ATEM-# arbitration) + exhaustive D-04..D-13 tests
+- [x] 01-03-PLAN.md — Single-writer diff reconciler (last-sent ownership, no-op-on-unchanged, per-field change report)
 
 ### Phase 2: Config Persistence + Mapping Model
 **Goal**: vMix/ATEM connection settings and the vMix-input → ATEM-input mapping survive restarts, anchored to stable identities rather than volatile string positions.
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Core Resolver + Tally State Spine | 1/3 | In Progress|  |
+| 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
 | 2. Config Persistence + Mapping Model | 0/TBD | Not started | - |
 | 3. vMix Live Ingest | 0/TBD | Not started | - |
 | 4. ATEM Output + Walk-Test | 0/TBD | Not started | - |
