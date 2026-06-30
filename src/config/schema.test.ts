@@ -205,10 +205,12 @@ describe("entry field validation", () => {
   });
 
   it("vmixNumber non-positive rejected", () => {
-    const cfg = structuredClone(baseConfig);
-    // @ts-expect-error: testing invalid input
-    cfg.mapping = [{ vmixKey: "key-1", vmixNumber: 0, atemSource: 1, cameraId: "camA" }];
-    const result = schema.safeParse(cfg);
+    // Pass unknown to safeParse to test runtime validation without TS error
+    const raw: unknown = {
+      settings: { vmix: null, atem: null },
+      mapping: [{ vmixKey: "key-1", vmixNumber: 0, atemSource: 1, cameraId: "camA" }],
+    };
+    const result = schema.safeParse(raw);
     expect(result.success).toBe(false);
   });
 });
