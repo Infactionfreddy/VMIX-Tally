@@ -16,5 +16,9 @@
     "@types/node": "^22",
     "typescript": "^5",
     "vitest": "^3"
+  },
+  "dependencies": {
+    "lowdb": "^7.0.1",
+    "zod": "^4.4.3"
   }
 }
