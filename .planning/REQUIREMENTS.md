@@ -30,7 +30,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Mapping & Config
 
-- [ ] **MAP-01**: Nutzer kann jeden vMix-Input einem ATEM-Eingang/einer Kamera zuordnen (bis zu 8)
+- [x] **MAP-01**: Nutzer kann jeden vMix-Input einem ATEM-Eingang/einer Kamera zuordnen (bis zu 8)
 - [ ] **CFG-01**: vMix-/ATEM-Verbindungseinstellungen (IP/Port) bleiben über Server-Neustarts erhalten
 - [ ] **CFG-02**: Die Input-Zuordnung bleibt über Server-Neustarts erhalten
 
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-04 | Phase 1 | Complete |
 | CFG-01 | Phase 2 | Pending |
 | CFG-02 | Phase 2 | Pending |
-| MAP-01 | Phase 2 | Pending |
+| MAP-01 | Phase 2 | Complete |
 | VMIX-01 | Phase 3 | Pending |
 | VMIX-02 | Phase 3 | Pending |
 | VMIX-03 | Phase 3 | Pending |

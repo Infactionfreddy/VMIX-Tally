@@ -108,7 +108,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
-| 2. Config Persistence + Mapping Model | 0/TBD | Not started | - |
+| 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
 | 3. vMix Live Ingest | 0/TBD | Not started | - |
 | 4. ATEM Output + Walk-Test | 0/TBD | Not started | - |
 | 5. Reliability — Reconnect + Resync | 0/TBD | Not started | - |
