@@ -96,6 +96,14 @@ export const schema = z
      * Each entry anchors on vmixKey (GUID); see PersistedMappingEntry.
      */
     mapping: z.array(mappingEntry).max(8),
+    /**
+     * Per-camera sticky manual overrides (Phase 6 D-05).
+     * Key: cameraId string. Value: forced tally state.
+     * Optional — absent in configs from Phases 1–5; treated as empty (no overrides).
+     * IMPORTANT: null (no override) is represented by ABSENCE of the key, not null value.
+     * The REST handler deletes the key when state=null; never writes null values here.
+     */
+    overrides: z.record(z.string(), z.enum(['program', 'preview'])).optional(),
   })
   .superRefine((cfg, ctx) => {
     // D-07: Three uniqueness checks. Each one reports the duplicate entry's
@@ -134,6 +142,9 @@ export type PersistedConfig = z.infer<typeof schema>;
  * cameraId; the vMix anchor differs (vmixKey vs vmixInput). D-03 seam.
  */
 export type PersistedMappingEntry = z.infer<typeof mappingEntry>;
+
+/** Map of cameraId → forced tally state. Absence of a key = no override. */
+export type PersistedOverrides = NonNullable<PersistedConfig['overrides']>;
 
 // ---------------------------------------------------------------------------
 // ConfigValidationError — structured field-level error for the Phase 6 UI

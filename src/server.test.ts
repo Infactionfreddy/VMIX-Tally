@@ -85,3 +85,27 @@ describe("server walk-test route", () => {
     expect(mockAtem.walkTest).toHaveBeenCalledWith(sampleMapping, mockLogger);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Phase 6 Wave 0 stubs — filled in by Plan 02
+// These todo stubs define the WS broadcast + CSRF behavior contract.
+// ---------------------------------------------------------------------------
+
+describe('broadcast snapshot (UI-02, UI-03)', () => {
+  it.todo('pushes full snapshot to all OPEN WS clients on stateChanged event');
+  it.todo('includes cameras: [] when orchestrator.currentState is null');
+  it.todo('includes connections field reflecting current connStatus');
+  it.todo('includes latencyMs computed from tallyReceivedAt');
+});
+
+describe('connection status tracking (UI-02)', () => {
+  it.todo('sets connStatus.vmix = connected on vmixConnector ready event');
+  it.todo('sets connStatus.vmix = disconnected on vmixConnector disconnected event');
+  it.todo('sets connStatus.atem = connected on atemConnector ready event');
+  it.todo('sets connStatus.atem = disconnected on atemConnector disconnected event');
+});
+
+describe('CSRF hook (security)', () => {
+  it.todo('rejects PUT /overrides with Sec-Fetch-Site: cross-site with 403');
+  it.todo('accepts PUT /overrides with Sec-Fetch-Site: same-origin with 200');
+});
