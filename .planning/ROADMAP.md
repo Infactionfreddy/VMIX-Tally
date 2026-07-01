@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Config Persistence + Mapping Model** - Persisted vMix/ATEM settings and identity-anchored vMix→ATEM input mapping (≤8)
 - [x] **Phase 3: vMix Live Ingest** - TCP SUBSCRIBE TALLY push client, defensive parser, stable input-identity resolution (completed 2026-07-01)
 - [x] **Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)** - Cut-only ATEM bus control driving real red/green tally, walk-test verification, <100 ms latency proven (completed 2026-07-01)
-- [ ] **Phase 5: Reliability — Reconnect + Resync** - Backoff/jitter reconnect on both links with full-state resync, hydration-gated commands
+- [x] **Phase 5: Reliability — Reconnect + Resync** - Backoff/jitter reconnect on both links with full-state resync, hydration-gated commands (completed 2026-07-01)
 - [ ] **Phase 6: Web UI — Status then Control** - Live red/green dashboard, connection health, latency readout, then mapping editor, connection setup, manual override
 
 ## Phase Details
@@ -125,8 +125,8 @@ Plans:
 Plans:
 **Wave 1** *(both plans run in parallel — no shared files)*
 
-- [ ] 05-01-PLAN.md — VmixConnector: replace node-vmix ConnectionTCP with raw node:net socket + backoff loop (VMIX-04)
-- [ ] 05-02-PLAN.md — AtemConnector: disconnected backoff + 'ready' event + server.ts re-assert wiring (ATEM-04)
+- [x] 05-01-PLAN.md — VmixConnector: replace node-vmix ConnectionTCP with raw node:net socket + backoff loop (VMIX-04)
+- [x] 05-02-PLAN.md — AtemConnector: disconnected backoff + 'ready' event + server.ts re-assert wiring (ATEM-04)
 
 ### Phase 6: Web UI — Status then Control
 
@@ -174,5 +174,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
 | 3. vMix Live Ingest | 3/3 | Complete   | 2026-07-01 |
 | 4. ATEM Output + Walk-Test | 2/2 | Complete   | 2026-07-01 |
-| 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
+| 5. Reliability — Reconnect + Resync | 2/2 | Complete   | 2026-07-01 |
 | 6. Web UI — Status then Control | 0/4 | Not started | - |

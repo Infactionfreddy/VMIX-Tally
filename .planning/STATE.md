@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-07-01T07:45:00.549Z"
-last_activity: 2026-07-01 -- Phase 04 execution started
+stopped_at: Phase 5 complete — Phase 6 executing
+last_updated: "2026-07-01T08:20:00.000Z"
+last_activity: 2026-07-01 -- Phase 05 complete (169 tests green), Phase 06 executing
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 17
-  completed_plans: 7
-  percent: 33
+  completed_plans: 11
+  percent: 65
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** When vMix takes an input live, the right Blackmagic camera lights red over SDI — reliably, under 100 ms.
-**Current focus:** Phase 04 — atem-output-walk-test-end-to-end-mvp-slice
+**Current focus:** Phase 06 — web-ui-status-then-control
 
 ## Current Position
 
-Phase: 04 (atem-output-walk-test-end-to-end-mvp-slice) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 04
-Last activity: 2026-07-01 -- Phase 04 execution started
+Phase: 06 (web-ui-status-then-control) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 06
+Last activity: 2026-07-01 -- Phase 05 complete (169 tests green), Phase 06 executing
 
-Progress: [███████░░░] 67%
+Progress: [████████░░] 73%
 
 ## Performance Metrics
 
@@ -86,6 +86,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-01T01:53:52.211Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-web-ui-status-then-control/06-UI-SPEC.md
+Last session: 2026-07-01T08:20:00.000Z
+Stopped at: Phase 5 complete — Phase 6 Wave 1 executing
+Resume file: .planning/phases/06-web-ui-status-then-control/06-01-PLAN.md
