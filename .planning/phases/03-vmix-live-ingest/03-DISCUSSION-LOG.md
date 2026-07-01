@@ -141,10 +141,84 @@
 - Exact module filenames within `src/vmix/` (VmixConnector.ts, buildRuntimeMapping.ts, etc.)
 - XML parsing approach for HTTP roster response (built-in DOMParser, fast-xml-parser, or regex scan)
 - Whether VmixConnector extends EventEmitter directly or uses a typed emitter wrapper
-- Whether in-memory current desired state is a simple property or a light observer pattern
 
 ## Deferred Ideas
 
 - SUBSCRIBE ACTS for roster changes — more semantically correct but needs vMix API verification; deferred to Phase 5/research backlog
 - Reconnect with backoff/jitter (VMIX-04) — Phase 5
 - vMix ACTS/FUNCTION subscriptions beyond TALLY — v2
+
+---
+
+## Update Session — 2026-07-01 (--all)
+
+**Areas discussed:** ConfigStore coupling, Roster startup timing, Phase 4 interface, pino logger pattern
+
+---
+
+## ConfigStore Coupling in TallyOrchestrator
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| ConfigStore instance injected | Holds ref, reads mapping per tally event. Phase 6 UI changes apply immediately. | ✓ |
+| Snapshot at construction | PersistedMappingEntry[] passed once. Mapping changes require restart. | |
+
+**User's choice:** ConfigStore instance injected
+
+**Follow-up — read frequency:**
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Per tally event (live) | Always current; lowdb in-memory cache keeps overhead negligible. | ✓ |
+| Cached + invalidate on 'rosterUpdated' | Fewer reads but misses immediate UI config changes. | |
+
+**Decision captured:** D-13 in CONTEXT.md
+
+---
+
+## 'rosterUpdated' → Re-resolve Trigger (startup timing)
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Re-resolve with lastRawTally | On 'rosterUpdated', immediately re-run resolve() with stored tally. Prevents startup all-off window. | ✓ |
+| Wait for next tally push | Resolve only on 'tally' events. Simpler but startup all-off window exists. | |
+
+**Follow-up — no lastRawTally yet:**
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Silently ignore | No lastRawTally → nothing to resolve. Wait for first tally event. | ✓ |
+| Resolve with empty [] | Produces all-off log entry that never really happened. | |
+
+**Decision captured:** D-14 in CONTEXT.md
+
+---
+
+## Phase 4 Hookup Interface on TallyOrchestrator
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Getter + 'stateChanged' event | currentState getter for ATEM initial sync + event for incremental updates. | ✓ |
+| Event only | Phase 4 waits for next change — ATEM initial state unknown until first switch. | |
+| Getter only (polling) | Not reactive; Phase 4 must decide when to poll. | |
+
+**Follow-up — event payload:**
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| newState: ResolverOutput | Event carries only new state. oldState is pino's concern, not the consumer's. | ✓ |
+| { oldState, newState } | Redundant — reconciler already diffs; double delta logic. | |
+
+**Decision captured:** D-15 in CONTEXT.md
+
+---
+
+## pino Root Logger Ownership
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Optional constructor param (logger = pino()) | Default to pino(); tests inject pino({ level: 'silent' }). Best of both. | ✓ |
+| Always required argument | Explicit but boilerplate everywhere. | |
+| Decide in Phase 4 entry point | Phase 3 only defines API; Phase 4 creates root. | |
+
+**Decision captured:** D-16 in CONTEXT.md

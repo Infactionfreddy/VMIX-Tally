@@ -107,6 +107,39 @@ polling as a primary tally source (explicitly out per CLAUDE.md — TCP push onl
   delete (Key disappears from roster, length changes). STATE.md flagged this as
   important — capturing realistic edge-case fixtures is a key deliverable.
 
+### TallyOrchestrator — ConfigStore + Startup Behavior
+
+- **D-13:** `TallyOrchestrator` constructor-injects a **`ConfigStore` instance**.
+  On every `'tally'` event, it calls `configStore.read()` to get the current
+  `PersistedMappingEntry[]` (live re-read, not a cached snapshot). lowdb's
+  in-memory cache makes this safe at tally-event frequency. This allows Phase 6
+  UI mapping changes to take effect immediately without restarting the orchestrator.
+
+- **D-14:** When `VmixConnector` emits `'rosterUpdated'`, the orchestrator
+  **re-runs `resolve()`** using the stored `lastRawTally` and the new roster. If
+  no `lastRawTally` exists yet (no tally push received), the event is silently
+  ignored. This prevents a startup window where the orchestrator stays all-off
+  because the async HTTP roster fetch completes after the first tally push.
+
+### TallyOrchestrator — Phase 4 API
+
+- **D-15:** `TallyOrchestrator` exposes two observation points for Phase 4:
+  - `currentState` getter → `ResolverOutput | null` (null until first resolve runs)
+  - `'stateChanged'` event, payload: `newState: ResolverOutput`
+  
+  Phase 4 reads `currentState` at ATEM-connect time for initial bus sync, then
+  subscribes to `'stateChanged'` for incremental updates. The event carries only
+  `newState` — `oldState` is pino's concern (logged internally), not the event
+  consumer's.
+
+### pino Logger Pattern
+
+- **D-16:** Each module that logs (`VmixConnector`, `TallyOrchestrator`) takes an
+  **optional `logger` constructor parameter** defaulting to `pino()`. Production
+  callers omit the argument; tests pass `pino({ level: 'silent' })`. Phase 4's
+  server entry point will create the root pino instance and thread it down. No
+  module-level singletons — always injectable, always optional.
+
 ### Claude's Discretion
 
 - Exact module filenames within `src/vmix/` (e.g. `VmixConnector.ts`,
@@ -116,8 +149,6 @@ polling as a primary tally source (explicitly out per CLAUDE.md — TCP push onl
   defensible given the simple data shape needed).
 - Whether `VmixConnector` extends `EventEmitter` directly or uses a typed emitter
   wrapper (`EventEmitter3`, `mitt`, or typed overloads on the native emitter).
-- Whether the in-memory "current desired state" in the orchestrator is a simple
-  property or uses a simple observer pattern for Phase 4 hookup.
 
 </decisions>
 
