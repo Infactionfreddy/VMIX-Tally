@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Core Resolver + Tally State Spine** - Pure desired-state resolver (live → mapping → override) with single-writer diff reconciler, no I/O (completed 2026-06-29)
 - [ ] **Phase 2: Config Persistence + Mapping Model** - Persisted vMix/ATEM settings and identity-anchored vMix→ATEM input mapping (≤8)
 - [x] **Phase 3: vMix Live Ingest** - TCP SUBSCRIBE TALLY push client, defensive parser, stable input-identity resolution (completed 2026-07-01)
-- [ ] **Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)** - Cut-only ATEM bus control driving real red/green tally, walk-test verification, <100 ms latency proven
+- [x] **Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)** - Cut-only ATEM bus control driving real red/green tally, walk-test verification, <100 ms latency proven (completed 2026-07-01)
 - [ ] **Phase 5: Reliability — Reconnect + Resync** - Backoff/jitter reconnect on both links with full-state resync, hydration-gated commands
 - [ ] **Phase 6: Web UI — Status then Control** - Live red/green dashboard, connection health, latency readout, then mapping editor, connection setup, manual override
 
@@ -106,7 +106,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02-PLAN.md — server.ts: entry point, module wiring (TallyOrchestrator → AtemConnector), Fastify + GET /walk-test route (VERIFY-01)
+- [x] 04-02-PLAN.md — server.ts: entry point, module wiring (TallyOrchestrator → AtemConnector), Fastify + GET /walk-test route (VERIFY-01)
 
 ### Phase 5: Reliability — Reconnect + Resync
 
@@ -173,6 +173,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
 | 3. vMix Live Ingest | 3/3 | Complete   | 2026-07-01 |
-| 4. ATEM Output + Walk-Test | 1/2 | In Progress|  |
+| 4. ATEM Output + Walk-Test | 2/2 | Complete   | 2026-07-01 |
 | 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
 | 6. Web UI — Status then Control | 0/4 | Not started | - |
