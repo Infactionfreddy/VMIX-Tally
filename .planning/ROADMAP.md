@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Core Resolver + Tally State Spine** - Pure desired-state resolver (live → mapping → override) with single-writer diff reconciler, no I/O (completed 2026-06-29)
 - [ ] **Phase 2: Config Persistence + Mapping Model** - Persisted vMix/ATEM settings and identity-anchored vMix→ATEM input mapping (≤8)
-- [ ] **Phase 3: vMix Live Ingest** - TCP SUBSCRIBE TALLY push client, defensive parser, stable input-identity resolution
+- [x] **Phase 3: vMix Live Ingest** - TCP SUBSCRIBE TALLY push client, defensive parser, stable input-identity resolution (completed 2026-07-01)
 - [ ] **Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)** - Cut-only ATEM bus control driving real red/green tally, walk-test verification, <100 ms latency proven
 - [ ] **Phase 5: Reliability — Reconnect + Resync** - Backoff/jitter reconnect on both links with full-state resync, hydration-gated commands
 - [ ] **Phase 6: Web UI — Status then Control** - Live red/green dashboard, connection health, latency readout, then mapping editor, connection setup, manual override
@@ -82,7 +82,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-03-PLAN.md — tallyOrchestrator wiring VmixConnector → resolve → in-memory ResolverOutput + pino logging
+- [x] 03-03-PLAN.md — tallyOrchestrator wiring VmixConnector → resolve → in-memory ResolverOutput + pino logging
 
 ### Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)
 
@@ -172,7 +172,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
-| 3. vMix Live Ingest | 2/3 | In Progress|  |
+| 3. vMix Live Ingest | 3/3 | Complete   | 2026-07-01 |
 | 4. ATEM Output + Walk-Test | 0/2 | Not started | - |
 | 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
 | 6. Web UI — Status then Control | 0/4 | Not started | - |
