@@ -142,7 +142,25 @@ Plans:
   4. User can configure vMix and ATEM IP/port in the web UI (persisted via Phase 2).
   5. User can manually force tally for a single camera — sticky, visually distinct, one-click releasable — routed through the Core so a live vMix change cannot silently stomp it.
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+**Wave 1** *(foundation — prerequisite for all other plans)*
+
+- [ ] 06-01-PLAN.md — TypeScript config split (NodeNext/bundler), Vite build setup, npm install, schema overrides extension (D-13), Wave 0 test stubs
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 06-02-PLAN.md — Fastify server expansion: @fastify/static + @fastify/websocket plugins, CSRF hook, broadcast helper, WS route, connection status tracking, all REST routes (/overrides, /config, /test, /vmix/roster)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 06-03-PLAN.md — Status dashboard frontend: state store, App WS lifecycle, Header, DisconnectBanner, OverrideBanner, TallyGrid, CameraCard, TallyBadge, ConnectionBadge, LatencyReadout
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 06-04-PLAN.md — Control layer: OverrideControls, TestControls, MappingEditor, MappingRow, ConnectionSettings
+
 **UI hint**: yes
 
 ## Progress
@@ -157,4 +175,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. vMix Live Ingest | 0/3 | Not started | - |
 | 4. ATEM Output + Walk-Test | 0/2 | Not started | - |
 | 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
-| 6. Web UI — Status then Control | 0/TBD | Not started | - |
+| 6. Web UI — Status then Control | 0/4 | Not started | - |
