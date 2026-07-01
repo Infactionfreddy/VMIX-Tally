@@ -125,12 +125,12 @@ polling as a primary tally source (explicitly out per CLAUDE.md — TCP push onl
 
 - **D-15:** `TallyOrchestrator` exposes two observation points for Phase 4:
   - `currentState` getter → `ResolverOutput | null` (null until first resolve runs)
-  - `'stateChanged'` event, payload: `newState: ResolverOutput`
+  - `'stateChanged'` event, payload: `{ newState: ResolverOutput, tallyReceivedAt: number }`
   
   Phase 4 reads `currentState` at ATEM-connect time for initial bus sync, then
-  subscribes to `'stateChanged'` for incremental updates. The event carries only
-  `newState` — `oldState` is pino's concern (logged internally), not the event
-  consumer's.
+  subscribes to `'stateChanged'` for incremental updates. `tallyReceivedAt` is
+  `Date.now()` from when the raw tally push arrived — Phase 4 computes
+  `latencyMs = Date.now() - tallyReceivedAt` at command-send time for REL-01.
 
 ### pino Logger Pattern
 
