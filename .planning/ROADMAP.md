@@ -74,7 +74,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Pure-function contracts (parseTallyString, parseRosterXml, buildRuntimeMapping) + vmixHttpPort schema extension
+- [x] 03-01-PLAN.md — Pure-function contracts (parseTallyString, parseRosterXml, buildRuntimeMapping) + vmixHttpPort schema extension
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -172,7 +172,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
-| 3. vMix Live Ingest | 0/3 | Not started | - |
+| 3. vMix Live Ingest | 1/3 | In Progress|  |
 | 4. ATEM Output + Walk-Test | 0/2 | Not started | - |
 | 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
 | 6. Web UI — Status then Control | 0/4 | Not started | - |
