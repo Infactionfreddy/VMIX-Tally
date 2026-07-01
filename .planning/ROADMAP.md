@@ -113,7 +113,12 @@ Plans:
   3. A cable-pull test on either endpoint results in tally reflecting current state after recovery, not pre-drop state.
   4. No ATEM command is sent in the connected-but-not-yet-hydrated window.
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+**Wave 1** *(both plans run in parallel — no shared files)*
+
+- [ ] 05-01-PLAN.md — VmixConnector: replace node-vmix ConnectionTCP with raw node:net socket + backoff loop (VMIX-04)
+- [ ] 05-02-PLAN.md — AtemConnector: disconnected backoff + 'ready' event + server.ts re-assert wiring (ATEM-04)
 
 ### Phase 6: Web UI — Status then Control
 
@@ -143,5 +148,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
 | 3. vMix Live Ingest | 0/3 | Not started | - |
 | 4. ATEM Output + Walk-Test | 0/TBD | Not started | - |
-| 5. Reliability — Reconnect + Resync | 0/TBD | Not started | - |
+| 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
 | 6. Web UI — Status then Control | 0/TBD | Not started | - |
