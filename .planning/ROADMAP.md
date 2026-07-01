@@ -78,7 +78,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Install node-vmix + pino; VmixConnector EventEmitter (TCP + HTTP roster, typed events)
+- [x] 03-02-PLAN.md — Install node-vmix + pino; VmixConnector EventEmitter (TCP + HTTP roster, typed events)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -172,7 +172,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
-| 3. vMix Live Ingest | 1/3 | In Progress|  |
+| 3. vMix Live Ingest | 2/3 | In Progress|  |
 | 4. ATEM Output + Walk-Test | 0/2 | Not started | - |
 | 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
 | 6. Web UI — Status then Control | 0/4 | Not started | - |
