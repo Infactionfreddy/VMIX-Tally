@@ -16,6 +16,27 @@ const connection = z
   .nullable();
 
 // ---------------------------------------------------------------------------
+// vMix connection sub-schema — extends connection with vmixHttpPort (D-08)
+//
+// vmixHttpPort is separately configurable from the TCP port (8099).
+// Default is 8088 but is applied by the CONSUMER at read time (NOT via .default()
+// here) to keep the JSON file clean and avoid round-trip surprises.
+// Optional field — existing stored configs without vmixHttpPort parse as valid.
+// ---------------------------------------------------------------------------
+
+const vmixConnection = z
+  .object({
+    host: z.string().min(1),
+    port: z.number().int().min(1).max(65535),
+    /**
+     * vMix HTTP API port (D-08). Optional — consumer applies ?? 8088 at read time.
+     * NOT the TCP port (8099). Used for the roster fetch (`http://{host}:{vmixHttpPort}/api`).
+     */
+    vmixHttpPort: z.number().int().min(1).max(65535).optional(),
+  })
+  .nullable();
+
+// ---------------------------------------------------------------------------
 // Mapping entry sub-schema
 //
 // vmixKey (D-01): GUID — the stable anchor for each mapping entry.
@@ -69,7 +90,7 @@ export const schema = z
   .object({
     /** Optional schema version — future migration anchor. */
     version: z.literal(1).optional(),
-    settings: z.object({ vmix: connection, atem: connection }),
+    settings: z.object({ vmix: vmixConnection, atem: connection }),
     /**
      * Input mapping: up to 8 entries (D-09). Partial/empty is valid (D-08).
      * Each entry anchors on vmixKey (GUID); see PersistedMappingEntry.
