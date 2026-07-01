@@ -94,15 +94,15 @@ Exceptions:
 | Role | Size | Weight | Line Height | CSS Variable |
 |------|------|--------|-------------|--------------|
 | Body | 14px | 400 | 1.5 | `--text-body` |
-| Label | 12px | 600 | 1.2 | `--text-label` |
-| Heading | 18px | 600 | 1.2 | `--text-heading` |
+| Label | 12px | 700 | 1.2 | `--text-label` |
+| Heading | 18px | 700 | 1.2 | `--text-heading` |
 | Display | 28px | 700 | 1.0 | `--text-display` |
 
 **Role assignments:**
 
 - **Body (14/400/1.5):** Form field values, mapping table rows, status copy in banners
-- **Label (12/600/1.2):** Button text, column headers, badge text inside tally state, section summary hints
-- **Heading (18/600/1.2):** Camera name on card, section `<summary>` text, connection settings section title
+- **Label (12/700/1.2):** Button text, column headers, badge text inside tally state, section summary hints
+- **Heading (18/700/1.2):** Camera name on card, section `<summary>` text, connection settings section title
 - **Display (28/700/1.0):** The tally state text inside the camera card badge (`LIVE`, `PREV`, `—`)
 
 Uppercase transform applied to display role only (`text-transform: uppercase`).
