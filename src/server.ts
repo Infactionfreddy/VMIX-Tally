@@ -275,11 +275,12 @@ export function buildApp(
   // ---------------------------------------------------------------------------
 
   orchestrator.on('stateChanged', (state: ResolverOutput) => {
-    // Approximate latency: time from broadcast to now (tallyReceivedAt not in payload)
-    lastLatencyMs = 0; // reset on each stateChanged; actual measurement would require
-    // the raw tallyReceivedAt timestamp from VmixConnector, not available here.
-    // Set to 0 as sentinel: real latency available in pino logs (Phase 4 D-08).
+    // CRITICAL DEVIATION: 'stateChanged' emits ResolverOutput directly (not {newState, tallyReceivedAt}).
+    // tallyReceivedAt is not available from this event — latencyMs remains null.
+    // Real latency is captured in pino logs (Phase 4 D-08: latencyMs in atem_command_sent).
+    // A future phase can expose tallyReceivedAt via orchestrator if needed for UI-05.
     void state; // consumed by buildSnapshot via orchestrator.currentDesiredState()
+    lastLatencyMs = null; // no measurement available from this event payload
     broadcast();
   });
 
