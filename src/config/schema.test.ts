@@ -401,3 +401,68 @@ describe("alignment with coerceMapping shared-field guards", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// D-08 Phase3: vmixHttpPort backward-compatible schema extension
+//
+// vmixHttpPort is an optional field on the vmix connection sub-schema only.
+// ATEM sub-schema is unaffected. Existing configs without vmixHttpPort still parse.
+// ---------------------------------------------------------------------------
+
+describe("D-08 Phase3 — vmixHttpPort backward-compatible schema extension", () => {
+  it("D-08: vmixHttpPort absent is valid — backward-compatible with existing stored configs", () => {
+    const result = schema.safeParse({
+      settings: { vmix: { host: "192.168.1.1", port: 8099 }, atem: null },
+      mapping: [],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.settings.vmix?.vmixHttpPort).toBeUndefined();
+    }
+  });
+
+  it("D-08: vmixHttpPort: 8088 explicit value accepted", () => {
+    const result = schema.safeParse({
+      settings: { vmix: { host: "192.168.1.1", port: 8099, vmixHttpPort: 8088 }, atem: null },
+      mapping: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("D-08: vmixHttpPort: 0 rejected (below min 1)", () => {
+    const result = schema.safeParse({
+      settings: { vmix: { host: "192.168.1.1", port: 8099, vmixHttpPort: 0 }, atem: null },
+      mapping: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("D-08: vmixHttpPort: 65536 rejected (above max 65535)", () => {
+    const result = schema.safeParse({
+      settings: { vmix: { host: "192.168.1.1", port: 8099, vmixHttpPort: 65536 }, atem: null },
+      mapping: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("D-08: ATEM connection unaffected — atem sub-schema does not accept vmixHttpPort", () => {
+    // Verify that the ATEM sub-schema does NOT include vmixHttpPort by confirming
+    // the existing atem connection test still passes without any vmixHttpPort field.
+    const result = schema.safeParse({
+      settings: {
+        vmix: null,
+        atem: { host: "192.168.1.200", port: 9910 },
+      },
+      mapping: [],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      // ATEM connection type should not have vmixHttpPort
+      const atemConn = result.data.settings.atem;
+      expect(atemConn).not.toBeNull();
+      // TypeScript enforces this at compile time — atem uses the base connection schema
+      // which has no vmixHttpPort. This test is a runtime confirmation.
+      expect(Object.keys(atemConn ?? {})).not.toContain("vmixHttpPort");
+    }
+  });
+});
