@@ -8,7 +8,9 @@
 //   VMIX-02 — tally push events + rosterUpdated on connect
 //   D-02/D-03 — roster re-sync on length change (hold tally during resync)
 //   roster() — returns a copy, not the internal reference
+//   VMIX-04 — backoff reconnect loop (raw node:net socket)
 
+import { EventEmitter } from "node:events";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { TcpConnection, TallyEventData } from "./VmixConnector.js";
 
@@ -25,8 +27,18 @@ vi.mock("./parseRosterXml.js", () => ({
   ),
 }));
 
+// ---------------------------------------------------------------------------
+// Mock node:net so VmixConnector's createConnection can be intercepted.
+// vi.mock is hoisted to the top of the file — the factory function sets up
+// a vi.fn() that tests can configure with mockReturnValue.
+// ---------------------------------------------------------------------------
+vi.mock("node:net", () => ({
+  createConnection: vi.fn(),
+}));
+
 import { VmixConnector } from "./VmixConnector.js";
 import { fetchRoster } from "./parseRosterXml.js";
+import { createConnection } from "node:net";
 
 // ---------------------------------------------------------------------------
 // Mock TCP connection factory helpers
@@ -383,5 +395,260 @@ describe("rosterUpdated emits a copy", () => {
 
     // connector.roster() should still reflect the original data
     expect(connector.roster().get("guid-A")).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// backoff reconnect — VMIX-04
+// Tests for raw node:net socket + exponential backoff reconnect loop.
+// These tests will be RED until Task 2 replaces ConnectionTCP with raw socket.
+//
+// Mock strategy: vi.mock('node:net', ...) at file top (hoisted by Vitest);
+// each test configures vi.mocked(createConnection).mockReturnValue(mockSocket).
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a mock Socket-like EventEmitter with write/destroy stubs.
+ * Used by the VMIX-04 backoff tests only.
+ */
+function createMockSocket() {
+  const sock = new EventEmitter() as EventEmitter & {
+    write: ReturnType<typeof vi.fn>;
+    destroy: ReturnType<typeof vi.fn>;
+    destroyed: boolean;
+  };
+  sock.write = vi.fn();
+  sock.destroy = vi.fn().mockImplementation(() => {
+    sock.destroyed = true;
+  });
+  sock.destroyed = false;
+  return sock;
+}
+
+describe("backoff reconnect — VMIX-04", () => {
+  let mockSocket: ReturnType<typeof createMockSocket>;
+  const mockCreateConnection = vi.mocked(createConnection);
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+
+    // Set up a fresh mock socket for each test
+    mockSocket = createMockSocket();
+    mockCreateConnection.mockReturnValue(
+      mockSocket as unknown as import("node:net").Socket,
+    );
+
+    // Keep fetchRoster mocked
+    vi.mocked(fetchRoster).mockResolvedValue(
+      new Map([
+        ["guid-A", 1],
+        ["guid-B", 2],
+      ]),
+    );
+  });
+
+  /**
+   * Helper: ensure a mock socket won't throw on unhandled 'error' events.
+   * EventEmitter throws if 'error' is emitted with no listener registered.
+   * After Task 2, VmixConnector registers its own error handler on the real socket.
+   * During the RED phase, we add a safety listener so tests fail cleanly.
+   */
+  function silenceErrors(sock: ReturnType<typeof createMockSocket>): void {
+    sock.on("error", () => undefined);
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  // T1: backoffDelay at attempt=0 returns ~1000ms (vi.spyOn Math.random → 0.5)
+  it("T1: backoffDelay at attempt=0 returns 1000ms when Math.random()=0.5", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // Verify initial createSocket() was called
+    expect(mockCreateConnection).toHaveBeenCalledTimes(1);
+
+    // Track the setTimeout delay
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    mockSocket.emit("close");
+
+    // scheduleReconnect at attempt=0: base=1000, jitter=0.75+0.5*0.5=1.0 → 1000ms
+    const delays = setTimeoutSpy.mock.calls.map((call) => call[1]);
+    expect(delays).toContain(1000);
+
+    connector.destroy();
+  });
+
+  // T2: backoffDelay at attempt=5 returns 30000ms (capped — vi.spyOn Math.random → 0.5)
+  it("T2: backoffDelay at attempt=5 is capped at 30000ms when Math.random()=0.5", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // Simulate 5 disconnect/reconnect cycles to reach attempt=5
+    for (let i = 0; i < 5; i++) {
+      const nextSocket = createMockSocket();
+      mockCreateConnection.mockReturnValueOnce(
+        nextSocket as unknown as import("node:net").Socket,
+      );
+      mockSocket.emit("close");
+      vi.runAllTimers();
+      mockSocket = nextSocket;
+    }
+
+    // Now at attempt=5, fire close again and capture the setTimeout delay
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    mockSocket.emit("close");
+
+    const delays = setTimeoutSpy.mock.calls.map((call) => call[1]);
+    expect(delays).toContain(30000);
+
+    connector.destroy();
+  });
+
+  // T3: attempt counter resets to 0 after successful 'connect' event fires
+  it("T3: attempt counter resets to 0 after successful connect", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // Simulate one disconnect to increment attempt to 1
+    const reconnectSocket = createMockSocket();
+    mockCreateConnection.mockReturnValueOnce(
+      reconnectSocket as unknown as import("node:net").Socket,
+    );
+    mockSocket.emit("close");
+    expect(vi.getTimerCount()).toBe(1);
+
+    vi.runAllTimers(); // fires the retry timer → createSocket() called with reconnectSocket
+
+    // Fire 'connect' on the new socket → attempt resets to 0
+    reconnectSocket.emit("connect");
+
+    // Now fire 'close' again — attempt=0 should produce 1000ms delay
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    reconnectSocket.emit("close");
+
+    const delays = setTimeoutSpy.mock.calls.map((call) => call[1]);
+    expect(delays).toContain(1000);
+
+    connector.destroy();
+  });
+
+  // T4: lineBuffer is empty after 'connect' event (no stale bytes from prior session)
+  it("T4: lineBuffer cleared in connect handler (no stale bytes from prior session)", () => {
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // Push a partial line to simulate buffered bytes mid-session
+    mockSocket.emit("data", Buffer.from("PARTIAL"));
+
+    // Disconnect + reconnect
+    const reconnectSocket = createMockSocket();
+    mockCreateConnection.mockReturnValueOnce(
+      reconnectSocket as unknown as import("node:net").Socket,
+    );
+    mockSocket.emit("close");
+    vi.runAllTimers();
+
+    // Fire connect on new socket — lineBuffer should be cleared
+    reconnectSocket.emit("connect");
+
+    // Subscribe and listen for tally events
+    const tallyEvents: unknown[] = [];
+    connector.on("tally", (d: unknown) => tallyEvents.push(d));
+
+    // Emit a clean TALLY OK line — should parse cleanly without stale prefix
+    reconnectSocket.emit("data", Buffer.from("TALLY OK 10\r\n"));
+
+    expect(tallyEvents).toHaveLength(1);
+    expect((tallyEvents[0] as { rawTally: number[] }).rawTally).toEqual([1, 0]);
+
+    connector.destroy();
+  });
+
+  // T5: 'error' event calls sock.destroy() but does NOT schedule a reconnect timer
+  it("T5: error event calls sock.destroy() but does NOT schedule reconnect timer", () => {
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // After Task 2: VmixConnector registers 'error' handler on sock.
+    // During RED phase: add safety listener to prevent unhandled-error throw.
+    silenceErrors(mockSocket);
+
+    const timersBefore = vi.getTimerCount();
+
+    // Fire 'error' — should call sock.destroy(), should NOT schedule reconnect
+    mockSocket.emit("error", new Error("ECONNREFUSED"));
+
+    // Timer count must not increase from the error alone
+    expect(vi.getTimerCount()).toBe(timersBefore);
+    // The mock socket's destroy method should have been called
+    expect(mockSocket.destroy).toHaveBeenCalled();
+
+    connector.destroy();
+  });
+
+  // T6: 'close' event after error schedules exactly one reconnect timer
+  it("T6: close after error schedules exactly one reconnect timer (single timer invariant)", () => {
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // Safety listener for RED phase (see T5 note)
+    silenceErrors(mockSocket);
+
+    // Fire 'error' then 'close' (natural Node.js sequence on socket error)
+    mockSocket.emit("error", new Error("ECONNREFUSED"));
+    mockSocket.emit("close");
+
+    // Exactly one timer should be pending
+    expect(vi.getTimerCount()).toBe(1);
+
+    connector.destroy();
+    // After destroy, timer should be cancelled
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  // T7: destroy() cancels the pending retry timer and prevents further reconnects
+  it("T7: destroy() cancels pending retry timer and prevents further reconnects", () => {
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // Schedule a reconnect
+    mockSocket.emit("close");
+    expect(vi.getTimerCount()).toBe(1);
+
+    // destroy() should cancel the timer
+    connector.destroy();
+    expect(vi.getTimerCount()).toBe(0);
+
+    // Advance timers — createConnection should NOT be called again
+    const callCountBefore = mockCreateConnection.mock.calls.length;
+    vi.runAllTimers();
+    expect(mockCreateConnection.mock.calls.length).toBe(callCountBefore);
+  });
+
+  // T8: destroy() after successful connect stops future reconnects (destroyed guard)
+  it("T8: destroy() after successful connect prevents future reconnects", () => {
+    const logger = makeLogger();
+    const connector = new VmixConnector("192.168.1.100", 8099, 8088, logger);
+
+    // Fire connect to establish connection
+    mockSocket.emit("connect");
+
+    // Now destroy the connector
+    connector.destroy();
+
+    // Fire close — destroyed guard should prevent scheduleReconnect from scheduling
+    mockSocket.emit("close");
+    expect(vi.getTimerCount()).toBe(0);
+
+    // No new connections should be created
+    const callCountAfter = mockCreateConnection.mock.calls.length;
+    vi.runAllTimers();
+    expect(mockCreateConnection.mock.calls.length).toBe(callCountAfter);
   });
 });
