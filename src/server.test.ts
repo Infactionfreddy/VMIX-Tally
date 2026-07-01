@@ -70,6 +70,7 @@ function makeMockConfigStore(overrides: Record<string, 'program' | 'preview'> = 
     save: vi.fn().mockResolvedValue(undefined),
     getSettings: vi.fn().mockReturnValue(config.settings),
     getMapping: vi.fn().mockReturnValue(config.mapping),
+    getOverrides: vi.fn().mockReturnValue(overrides),
   };
 }
 

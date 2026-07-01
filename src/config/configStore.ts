@@ -11,7 +11,7 @@
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import { schema, toConfigValidationError } from "./schema.js";
-import type { PersistedConfig, PersistedMappingEntry, ConfigValidationError } from "./schema.js";
+import type { PersistedConfig, PersistedMappingEntry, PersistedOverrides, ConfigValidationError } from "./schema.js";
 
 // ---------------------------------------------------------------------------
 // Default document — first-boot safe state (D-11)
@@ -81,6 +81,14 @@ export class ConfigStore {
    */
   getMapping(): PersistedMappingEntry[] {
     return (this.db.data ?? structuredClone(DEFAULTS)).mapping;
+  }
+
+  /**
+   * Return the current per-camera overrides map synchronously.
+   * In-memory — no disk I/O. Called on every WS broadcast via buildSnapshot().
+   */
+  getOverrides(): PersistedOverrides {
+    return (this.db.data ?? structuredClone(DEFAULTS)).overrides ?? {};
   }
 
   // ---------------------------------------------------------------------------

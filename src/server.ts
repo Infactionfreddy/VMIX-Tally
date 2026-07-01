@@ -41,7 +41,7 @@ type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 
 interface StateSnapshot {
   type: 'state';
-  cameras: Array<{ cameraId: string; tally: string }>;
+  cameras: Array<{ cameraId: string; name: string; tally: string }>;
   connections: { vmix: ConnectionStatus; atem: ConnectionStatus };
   latencyMs: number | null;
   overrides: Record<string, 'program' | 'preview'>;
@@ -54,6 +54,8 @@ interface StateSnapshot {
 interface ConfigStoreInterface {
   read(): Promise<import('./config/schema.js').PersistedConfig>;
   write(cfg: import('./config/schema.js').PersistedConfig): Promise<void>;
+  getMapping(): import('./config/schema.js').PersistedMappingEntry[];
+  getOverrides(): import('./config/schema.js').PersistedOverrides;
 }
 
 // ---------------------------------------------------------------------------
@@ -125,10 +127,13 @@ export function buildApp(
 
   function buildSnapshot(): StateSnapshot {
     const state = orchestrator.currentDesiredState();
+    const persistedMapping = configStore.getMapping();
+    const nameMap = new Map(persistedMapping.map(e => [e.cameraId, e.vmixTitle ?? e.cameraId]));
 
     const cameras: StateSnapshot['cameras'] = state
       ? Object.entries(state.cameras).map(([cameraId, tally]) => ({
           cameraId,
+          name: nameMap.get(cameraId) ?? cameraId,
           tally,
         }))
       : [];
@@ -138,7 +143,7 @@ export function buildApp(
       cameras,
       connections: { ...connStatus },
       latencyMs: lastLatencyMs,
-      overrides: {},
+      overrides: configStore.getOverrides(),
     };
   }
 

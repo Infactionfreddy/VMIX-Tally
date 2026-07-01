@@ -16,6 +16,17 @@
   let atemHost = $state(initialSettings?.atem?.host ?? '');
   let errorMsg = $state('');
 
+  // $state initializes from props at creation time only; re-sync when the async fetch resolves.
+  $effect(() => {
+    if (initialSettings?.vmix) {
+      vmixHost = initialSettings.vmix.host ?? '';
+      vmixPort = initialSettings.vmix.port ?? 8099;
+    }
+    if (initialSettings?.atem) {
+      atemHost = initialSettings.atem.host ?? '';
+    }
+  });
+
   async function save(): Promise<void> {
     try {
       const res = await fetch('/config/settings', {
