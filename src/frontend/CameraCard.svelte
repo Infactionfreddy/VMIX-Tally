@@ -13,8 +13,8 @@
 <div class="card" class:has-override={currentOverride !== null}>
   <p class="name">{cam.name}</p>
   <TallyBadge tally={cam.tally} />
-  <OverrideControls />
-  <TestControls />
+  <OverrideControls cameraId={cam.cameraId} currentOverride={currentOverride} />
+  <TestControls cameraId={cam.cameraId} />
 </div>
 
 <style>
