@@ -12,6 +12,14 @@
   // does not flash on initial page load before the first WS open event.
   let wsAttempted = $state(false);
 
+  // Pre-populated settings for ConnectionSettings component
+  interface ConnectionInfo { host: string; port: number; }
+  interface InitialSettings {
+    vmix?: ConnectionInfo | null;
+    atem?: ConnectionInfo | null;
+  }
+  let initialSettings = $state<InitialSettings | undefined>(undefined);
+
   onMount(() => {
     function connect(): WebSocket {
       const ws = new WebSocket(`ws://${location.host}/ws`);
@@ -45,9 +53,14 @@
 
     const ws = connect();
 
-    // Pre-populate connection settings
+    // Pre-populate connection settings for ConnectionSettings component
     fetch('/config/settings')
       .then(res => (res.ok ? res.json() : null))
+      .then((data: { settings: InitialSettings } | null) => {
+        if (data?.settings) {
+          initialSettings = data.settings;
+        }
+      })
       .catch(() => null);
 
     return () => {
@@ -62,7 +75,7 @@
   <OverrideBanner />
   <TallyGrid />
   <MappingEditor />
-  <ConnectionSettings />
+  <ConnectionSettings initialSettings={initialSettings} />
 
   {#if !bridgeState.wsConnected && wsAttempted}
     <div class="ws-overlay" aria-live="assertive">

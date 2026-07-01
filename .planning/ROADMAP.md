@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: vMix Live Ingest** - TCP SUBSCRIBE TALLY push client, defensive parser, stable input-identity resolution (completed 2026-07-01)
 - [x] **Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)** - Cut-only ATEM bus control driving real red/green tally, walk-test verification, <100 ms latency proven (completed 2026-07-01)
 - [x] **Phase 5: Reliability — Reconnect + Resync** - Backoff/jitter reconnect on both links with full-state resync, hydration-gated commands (completed 2026-07-01)
-- [ ] **Phase 6: Web UI — Status then Control** - Live red/green dashboard, connection health, latency readout, then mapping editor, connection setup, manual override
+- [x] **Phase 6: Web UI — Status then Control** - Live red/green dashboard, connection health, latency readout, then mapping editor, connection setup, manual override (completed 2026-07-01)
 
 ## Phase Details
 
@@ -159,7 +159,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 06-04-PLAN.md — Control layer: OverrideControls, TestControls, MappingEditor, MappingRow, ConnectionSettings
+- [x] 06-04-PLAN.md — Control layer: OverrideControls, TestControls, MappingEditor, MappingRow, ConnectionSettings
 
 **UI hint**: yes
 
@@ -175,4 +175,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. vMix Live Ingest | 3/3 | Complete   | 2026-07-01 |
 | 4. ATEM Output + Walk-Test | 2/2 | Complete   | 2026-07-01 |
 | 5. Reliability — Reconnect + Resync | 2/2 | Complete   | 2026-07-01 |
-| 6. Web UI — Status then Control | 3/4 | In Progress|  |
+| 6. Web UI — Status then Control | 4/4 | Complete   | 2026-07-01 |

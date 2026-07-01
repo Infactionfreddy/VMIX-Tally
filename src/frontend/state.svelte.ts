@@ -25,3 +25,12 @@ export const bridgeState = $state<BridgeState>({
   overrides: {},
   wsConnected: false,
 });
+
+/**
+ * Tracks which cameraId is currently in test mode (D-12).
+ * Only one camera can be in test mode at a time.
+ * Exported as a mutable $state object so TestControls instances can coordinate.
+ */
+export const testState = $state<{ activeCameraInTest: string | null }>({
+  activeCameraInTest: null,
+});
