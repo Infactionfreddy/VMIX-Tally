@@ -98,7 +98,15 @@ Plans:
   4. User can run a per-input walk-test that drives each mapped ATEM input to program in turn, confirming the right physical camera lights.
   5. Measured p95 latency from vMix tally-in to ATEM command-sent stays under 100 ms under rapid switching on the real LAN.
 
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — AtemConnector: atem-connection wrapper, 'connected' hydration gate, applyState + TallyStateReconciler diff, walkTest loop, latencyMs logging (ATEM-01, ATEM-02, ATEM-03, REL-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — server.ts: entry point, module wiring (TallyOrchestrator → AtemConnector), Fastify + GET /walk-test route (VERIFY-01)
 
 ### Phase 5: Reliability — Reconnect + Resync
 
@@ -147,6 +155,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
 | 3. vMix Live Ingest | 0/3 | Not started | - |
-| 4. ATEM Output + Walk-Test | 0/TBD | Not started | - |
+| 4. ATEM Output + Walk-Test | 0/2 | Not started | - |
 | 5. Reliability — Reconnect + Resync | 0/2 | Not started | - |
 | 6. Web UI — Status then Control | 0/TBD | Not started | - |
