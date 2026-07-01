@@ -97,7 +97,7 @@ if (isMain) {
   );
 
   // TallyOrchestrator creates VmixConnector internally from config settings.
-  // VmixConnector auto-connects via node-vmix autoReconnect: true (no explicit connect() needed).
+  // VmixConnector auto-connects via raw node:net Socket with exponential backoff (VMIX-04).
   const orchestrator = new TallyOrchestrator(config, logger);
 
   // D-01: ONLY wiring point between vmix/ and atem/.
