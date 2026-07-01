@@ -699,22 +699,25 @@ server: {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`VmixConnector` event name for disconnection**
    - What we know: Phase 5 CONTEXT.md says VmixConnector event interface is "preserved" (`'tally'`, `'rosterUpdated'`). AtemConnector explicitly emits `'disconnected'`.
    - What's unclear: Whether Phase 5 adds `'disconnected'` to `VmixConnector` as well, or whether `server.ts` must listen to the raw socket `'close'` event differently.
    - Recommendation: During Phase 6 implementation, check Phase 5's VmixConnector for its disconnect event name. If not `'disconnected'`, add it to Phase 5 scope or handle in server.ts via the available event.
+   - RESOLVED: Phase 5 CONTEXT.md D-01/D-07 confirm both connectors emit `'ready'` and `'disconnected'`. Plan 02 Task 1 wires `vmixConnector.on('disconnected', ...)` and `atemConnector.on('disconnected', ...)` accordingly.
 
 2. **`lastLatencyMs` in memory — where it lives**
    - What we know: CONTEXT.md §Specific Ideas says `server.ts` maintains `lastLatencyMs` updated on each `'stateChanged'` event from `TallyOrchestrator`. The `latencyMs` field is in pino logs (Phase 4 D-08).
    - What's unclear: Does `TallyOrchestrator` expose `lastLatencyMs`, or does `server.ts` compute it from `tallyReceivedAt` at broadcast time?
    - Recommendation: `server.ts` already receives `{ newState, tallyReceivedAt }` in the `'stateChanged'` payload. Compute `lastLatencyMs = Date.now() - tallyReceivedAt` at broadcast time, store in a local variable. Simple, no new orchestrator API needed.
+   - RESOLVED: Plan 02 Task 1 behavior implements `lastLatencyMs = Date.now() - tallyReceivedAt` computed in the `'stateChanged'` handler in `server.ts`. No new orchestrator API needed.
 
 3. **SPA `index.html` fallback and `@fastify/static` configuration**
    - What we know: `@fastify/static` serves `dist/`. For a SPA with no client-side routing, the only URL is `/`. No need for a catch-all 404 → index.html handler since the UI is single-page.
    - What's unclear: Whether any direct URL navigation to non-root paths is expected.
    - Recommendation: Since there is no client-side routing (UI-SPEC: "No sidebar, no tabs, no routing. One URL, one scroll"), the SPA fallback complexity does not apply. Serve `dist/` with `prefix: '/'` and let `@fastify/static` handle the default `index.html` behavior.
+   - RESOLVED: Plan 02 Task 1 serves `dist/` with `prefix: '/'`. No SPA fallback needed — single URL, no client-side routing per UI-SPEC.
 
 ---
 

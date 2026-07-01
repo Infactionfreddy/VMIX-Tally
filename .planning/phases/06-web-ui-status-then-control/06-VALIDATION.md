@@ -38,8 +38,8 @@ created: 2026-07-01
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 06-01-01 | 01 | 1 | UI-02 | T-06-01 | Sec-Fetch-Site header check blocks cross-origin PUT requests | unit | `npx vitest run src/server/routes.test.ts` | ❌ W0 | ⬜ pending |
-| 06-01-02 | 01 | 1 | UI-03 | — | N/A | unit | `npx vitest run src/server/broadcast.test.ts` | ❌ W0 | ⬜ pending |
+| 06-01-01 | 01 | 1 | UI-02 | T-06-01 | Sec-Fetch-Site header check blocks cross-origin PUT requests | unit | `npx vitest run src/server.test.ts` | ❌ W0 | ⬜ pending |
+| 06-01-02 | 01 | 1 | UI-03 | — | N/A | unit | `npx vitest run src/server.test.ts` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -48,8 +48,9 @@ created: 2026-07-01
 ## Wave 0 Requirements
 
 - [ ] `src/frontend/tsconfig.json` — separate TS config for Svelte/Vite (moduleResolution: bundler)
-- [ ] `src/server/routes.test.ts` — stubs for UI-01, UI-02, UI-04, UI-05 REST endpoints
-- [ ] `src/server/broadcast.test.ts` — stubs for WS snapshot push (UI-03)
+- [ ] `src/server.test.ts` — stubs for WS broadcast, connection status, CSRF (UI-02, UI-03)
+- [ ] `src/routes/overrides.test.ts` — stubs for PUT /overrides/:cameraId (UI-04)
+- [ ] `src/routes/settings.test.ts` — stubs for GET/PUT /config/settings and /config/mapping (UI-01, UI-05)
 - [ ] `vite.config.ts` — Vite build configuration for Svelte 5 frontend
 
 *TypeScript config split (NodeNext for server, bundler for frontend) is the highest-risk setup step and must be Wave 0.*
