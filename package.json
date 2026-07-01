@@ -23,6 +23,7 @@
     "atem-connection": "^3.9.0",
     "fastify": "^5.9.0",
     "lowdb": "^7.0.1",
+    "node-vmix": "^1.7.1",
     "pino": "^10.3.1",
     "zod": "^4.4.3"
   }
