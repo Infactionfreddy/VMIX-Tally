@@ -1,7 +1,7 @@
 // Test suite for AtemConnector (src/atem/AtemConnector.ts).
 // Run: npx vitest run src/atem/AtemConnector.test.ts
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Logger } from "pino";
 import { AtemConnector } from "./AtemConnector.js";
 
@@ -24,6 +24,7 @@ function createMockAtem() {
     connect: vi.fn().mockResolvedValue(undefined),
     changeProgramInput: vi.fn().mockResolvedValue(undefined),
     changePreviewInput: vi.fn().mockResolvedValue(undefined),
+    destroy: vi.fn().mockResolvedValue(undefined),
   };
 
   const emit = (event: string, ...args: unknown[]) => {
@@ -201,6 +202,195 @@ describe("AtemConnector", () => {
       const logObj = commandSentCall![0] as Record<string, unknown>;
       expect(typeof logObj["latencyMs"]).toBe("number");
       expect(logObj["latencyMs"]).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  // ── ATEM reconnect + resync — ATEM-04 ───────────────────────────────────────
+
+  describe("ATEM reconnect + resync — ATEM-04", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it("T1: 'disconnected' event sets isHydrated to false", () => {
+      // First hydrate
+      emit("connected");
+      // Confirm hydrated: applyState should dispatch
+      const state = makeResolverOutput(3, 2);
+      connector.applyState(state, Date.now());
+      expect(mockAtem.changeProgramInput).toHaveBeenCalledTimes(1);
+
+      vi.clearAllMocks();
+
+      // Now disconnect
+      emit("disconnected");
+
+      // After disconnect, applyState should NOT dispatch (stores as pending)
+      connector.applyState(makeResolverOutput(1, 2), Date.now());
+      expect(mockAtem.changeProgramInput).not.toHaveBeenCalled();
+    });
+
+    it("T2: 'disconnected' event schedules exactly one reconnect timer", () => {
+      // Hydrate first
+      emit("connected");
+      vi.clearAllMocks();
+
+      // Disconnect
+      emit("disconnected");
+
+      // Advance timers: the reconnect should call atem.connect() once
+      vi.runAllTimers();
+
+      expect(mockAtem.connect).toHaveBeenCalledTimes(1);
+      expect(mockAtem.connect).toHaveBeenCalledWith("192.168.1.100", expect.any(Number));
+    });
+
+    it("T3: On reconnect, 'connected' event sets isHydrated back to true", () => {
+      // Hydrate, disconnect, then reconnect
+      emit("connected");
+      emit("disconnected");
+
+      // Trigger the scheduled reconnect
+      vi.runAllTimers();
+
+      // Now emit 'connected' to simulate successful reconnect
+      emit("connected");
+
+      // isHydrated should be true again — applyState should dispatch
+      const state = makeResolverOutput(3, 2);
+      connector.applyState(state, Date.now());
+      expect(mockAtem.changeProgramInput).toHaveBeenCalledWith(3, 0);
+    });
+
+    it("T4: 'ready' event is emitted after isHydrated flips to true on reconnect", () => {
+      // Hydrate, disconnect, reconnect
+      emit("connected");
+      emit("disconnected");
+      vi.runAllTimers();
+
+      const readyListener = vi.fn();
+      connector.on("ready", readyListener);
+
+      emit("connected");
+
+      expect(readyListener).toHaveBeenCalledTimes(1);
+    });
+
+    it("T5: reconciler.reset() is called before applyState() on reconnect (needsResync path)", () => {
+      // Access private reconciler via cast to spy on it
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const reconciler = (connector as any).reconciler as { reset: () => void };
+      const resetSpy = vi.spyOn(reconciler, "reset");
+
+      // Hydrate, dispatch once to set reconciler state
+      emit("connected");
+      connector.applyState(makeResolverOutput(3, 2), Date.now());
+      resetSpy.mockClear();
+
+      // Disconnect then reconnect
+      emit("disconnected");
+      vi.runAllTimers();
+      emit("connected");
+
+      // Now call applyState — should trigger reconciler.reset() via needsResync
+      connector.applyState(makeResolverOutput(3, 2), Date.now());
+
+      expect(resetSpy).toHaveBeenCalled();
+    });
+
+    it("T6: applyState() issues ATEM command even when desired state is identical to pre-disconnect state", () => {
+      // Hydrate, set state
+      emit("connected");
+      const state = makeResolverOutput(3, 2);
+      connector.applyState(state, Date.now());
+      expect(mockAtem.changeProgramInput).toHaveBeenCalledTimes(1);
+
+      vi.clearAllMocks();
+
+      // Second call with same state — no-op (reconciler dedup)
+      connector.applyState(state, Date.now());
+      expect(mockAtem.changeProgramInput).not.toHaveBeenCalled();
+
+      // Disconnect + reconnect
+      emit("disconnected");
+      vi.runAllTimers();
+      emit("connected");
+
+      vi.clearAllMocks();
+
+      // Same state again — but should be sent because reconciler was reset (needsResync)
+      connector.applyState(state, Date.now());
+      expect(mockAtem.changeProgramInput).toHaveBeenCalledTimes(1);
+    });
+
+    it("T7: No 'ready' event if 'disconnected' fires without subsequent 'connected'", () => {
+      const readyListener = vi.fn();
+      connector.on("ready", readyListener);
+
+      emit("connected"); // initial hydration emits ready on first connect too
+      const initialCount = readyListener.mock.calls.length;
+
+      emit("disconnected");
+      // Do NOT emit 'connected' after
+
+      expect(readyListener).toHaveBeenCalledTimes(initialCount); // no new 'ready'
+    });
+
+    it("T8: destroy() cancels the pending retry timer", () => {
+      // Hydrate then disconnect to schedule reconnect
+      emit("connected");
+      emit("disconnected");
+
+      // Destroy before timer fires
+      connector.destroy();
+
+      // Advance timers — connect should NOT be called
+      vi.runAllTimers();
+
+      expect(mockAtem.connect).not.toHaveBeenCalled();
+    });
+
+    it("T9: backoff at attempt=0 returns ~1000ms (Math.random → 0.5)", () => {
+      // Math.random is pinned to 0.5: delay = min(1000*2^0, 30000) * (0.75 + 0.5*0.5) = 1000 * 1.0 = 1000ms
+      // We verify by checking that the timer fires connect() at exactly 1000ms
+      emit("connected");
+      emit("disconnected");
+
+      // Timer should fire at 1000ms (±0 since Math.random = 0.5 → factor = 1.0)
+      vi.advanceTimersByTime(999);
+      expect(mockAtem.connect).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+      expect(mockAtem.connect).toHaveBeenCalledTimes(1);
+    });
+
+    it("T10: attempt counter resets to 0 after successful hydration", () => {
+      // Trigger several disconnects to increment attempt counter
+      emit("connected");
+      emit("disconnected"); // attempt → 1
+
+      vi.runAllTimers(); // fires connect()
+
+      emit("disconnected"); // attempt → 2
+      vi.runAllTimers(); // fires connect() after 2s
+
+      // Now simulate successful reconnect
+      emit("connected"); // attempt should reset to 0
+
+      // After reset, next disconnect should schedule at ~1000ms (attempt=0)
+      emit("disconnected");
+
+      vi.advanceTimersByTime(999);
+      expect(mockAtem.connect).toHaveBeenCalledTimes(2); // only previous two calls
+
+      vi.advanceTimersByTime(1);
+      expect(mockAtem.connect).toHaveBeenCalledTimes(3); // new call at 1000ms → attempt was 0
     });
   });
 });

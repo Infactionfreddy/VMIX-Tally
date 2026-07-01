@@ -14,19 +14,31 @@
 //
 // Fail-open: connect() does not await or throw (D-02). All command rejections are caught
 // and logged, never thrown (T-04-03).
+//
+// Reconnect: 'disconnected' event triggers exponential backoff loop (ATEM-04, D-01).
+// 'ready' event emitted on every successful hydration (initial + reconnect) — server.ts
+// listens to re-assert current desired state (D-02). needsResync flag ensures
+// reconciler.reset() runs before first submit() after reconnect (D-03).
 
+import { EventEmitter } from "node:events";
 import { Atem } from "atem-connection";
 import type { Logger } from "pino";
 import { TallyStateReconciler } from "../core/tallyState.js";
 import type { ResolverOutput } from "../core/events.js";
 import type { MappingEntry } from "../core/resolver.js";
 
-export class AtemConnector {
+export class AtemConnector extends EventEmitter {
   private readonly atem: Atem;
   private readonly reconciler = new TallyStateReconciler();
   private isHydrated = false;
   private pendingState: ResolverOutput | null = null;
   private readonly logger: Logger;
+
+  // Backoff / lifecycle state (ATEM-04)
+  private attempt = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private destroyed = false;
+  private needsResync = false;
 
   constructor(
     private readonly host: string,
@@ -34,6 +46,7 @@ export class AtemConnector {
     logger: Logger,
     _atemFactory?: () => Atem,
   ) {
+    super();
     this.logger = logger;
     this.atem = _atemFactory ? _atemFactory() : new Atem();
 
@@ -83,6 +96,19 @@ export class AtemConnector {
   }
 
   /**
+   * Tear down the connector: cancel any pending reconnect timer and destroy the
+   * underlying atem-connection instance. Safe to call multiple times.
+   */
+  destroy(): void {
+    this.destroyed = true;
+    if (this.retryTimer !== null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    void this.atem.destroy();
+  }
+
+  /**
    * Run the sequential walk-test loop (VERIFY-01).
    *
    * For each mapped camera: program (2 s red) → preview (2 s green) → next.
@@ -118,32 +144,47 @@ export class AtemConnector {
   // ---------------------------------------------------------------------------
 
   private handleConnected(): void {
-    this.logger.info(
-      { event: "atem_connected", host: this.host, port: this.port },
-      "ATEM connected",
-    );
     this.isHydrated = true;
+    this.attempt = 0; // reset backoff counter on successful connect (ATEM-04)
+    this.logger.info(
+      { event: "atem_hydrated", host: this.host },
+      "ATEM hydrated",
+    );
 
     if (this.pendingState !== null) {
       this.logger.info(
         { event: "atem_pending_flush" },
         "Flushing pending state after hydration",
       );
-      this._dispatch(this.pendingState);
+      const s = this.pendingState;
       this.pendingState = null;
+      this._dispatch(s);
     }
+
+    // D-02: needsResync MUST be set BEFORE emit('ready') so that the 'ready'
+    // listener's applyState() call sees needsResync=true and calls reconciler.reset().
+    this.needsResync = true;
+    this.emit("ready");
   }
 
   private handleDisconnected(): void {
+    this.isHydrated = false;
     this.logger.warn(
       { event: "atem_disconnected" },
-      "ATEM disconnected",
+      "ATEM disconnected — scheduling reconnect",
     );
-    this.isHydrated = false;
-    this.reconciler.reset(); // Phase 5 resync seam: next submit() will always report changed
+    this.scheduleReconnect(); // D-01: backoff starts on every disconnect
   }
 
   private _dispatch(state: ResolverOutput, tallyReceivedAt?: number): void {
+    // D-03: if flagged for resync, reset reconciler so next submit() always reports
+    // changed:true — guarantees ATEM receives the command even if desired state is
+    // unchanged from pre-disconnect (needsResync set in handleConnected() before emit('ready')).
+    if (this.needsResync) {
+      this.reconciler.reset();
+      this.needsResync = false;
+    }
+
     const report = this.reconciler.submit(state.bus);
     if (!report.changed) return;
 
@@ -178,5 +219,43 @@ export class AtemConnector {
           this.logger.error({ err }, "changePreviewInput failed"),
         );
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Backoff reconnect (ATEM-04, D-03)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Compute next backoff delay.
+   * Formula: min(1000 * 2^attempt, 30000) * (0.75 + Math.random() * 0.5)
+   * Result: initial ~1s, max ~30s, ±25% jitter.
+   */
+  private backoffDelay(): number {
+    const base = Math.min(1000 * Math.pow(2, this.attempt), 30_000);
+    return base * (0.75 + Math.random() * 0.5);
+  }
+
+  /**
+   * Schedule a reconnect attempt after backoff delay. Guard: destroyed flag halts
+   * the loop. Single-timer invariant: called only from 'disconnected' handler.
+   * Do NOT call atem.disconnect() before atem.connect() — _isDisconnecting flag
+   * is not set on unexpected drops (05-RESEARCH.md Pattern 2).
+   */
+  private scheduleReconnect(): void {
+    if (this.destroyed) return;
+    const delay = this.backoffDelay();
+    this.attempt++;
+    this.logger.info(
+      { event: "atem_reconnecting", attempt: this.attempt, delayMs: Math.round(delay) },
+      "ATEM reconnecting",
+    );
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      if (!this.destroyed) {
+        void this.atem.connect(this.host, this.port).catch((err: unknown) => {
+          this.logger.warn({ err }, "ATEM connect() rejected");
+        });
+      }
+    }, delay);
   }
 }

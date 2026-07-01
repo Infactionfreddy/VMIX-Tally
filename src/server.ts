@@ -109,6 +109,21 @@ if (isMain) {
     atem.applyState(newState, Date.now());
   });
 
+  // ATEM-04 / D-02: Re-assert full current desired state on every ATEM reconnect.
+  // 'ready' fires when AtemConnector hydrates (initial connect + every reconnect).
+  // null guard: orchestrator.currentState is null when no vMix tally has arrived yet —
+  // skip re-assert and let the normal tally path push state when vMix delivers next event.
+  atem.on("ready", () => {
+    const state = orchestrator.currentDesiredState();
+    if (state !== null) {
+      atem.applyState(state, Date.now());
+      logger.info(
+        { event: "atem_resynced" },
+        "ATEM ready — re-asserted current desired state",
+      );
+    }
+  });
+
   // Log configured vMix settings for operator diagnostics.
   if (vmixSettings === null) {
     logger.warn(
