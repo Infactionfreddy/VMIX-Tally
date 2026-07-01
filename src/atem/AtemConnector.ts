@@ -1,0 +1,182 @@
+// ATEM hardware interface — wraps atem-connection 3.9.0.
+//
+// Hydration gate: isHydrated becomes true on the 'connected' event, NOT 'stateChanged'.
+// Reason: stateChanged is suppressed during the InitCompleteCommand batch (atem.js lines
+// 175-181, verified 3.9.0). The 'connected' event fires at _onInitComplete() with
+// atem.state fully populated. Using 'stateChanged' as the hydration signal would leave
+// isHydrated permanently false until the first real switcher change after connect.
+//
+// Command dispatch: applyState() feeds ResolverOutput into TallyStateReconciler.submit()
+// and issues changeProgramInput/changePreviewInput ONLY for changed fields (CORE-03).
+//
+// Latency logging: latencyMs = Date.now() - tallyReceivedAt is logged BEFORE awaiting
+// the command promise, capturing time from tally receipt to command-send (REL-01).
+//
+// Fail-open: connect() does not await or throw (D-02). All command rejections are caught
+// and logged, never thrown (T-04-03).
+
+import { Atem } from "atem-connection";
+import type { Logger } from "pino";
+import { TallyStateReconciler } from "../core/tallyState.js";
+import type { ResolverOutput } from "../core/events.js";
+import type { MappingEntry } from "../core/resolver.js";
+
+export class AtemConnector {
+  private readonly atem: Atem;
+  private readonly reconciler = new TallyStateReconciler();
+  private isHydrated = false;
+  private pendingState: ResolverOutput | null = null;
+  private readonly logger: Logger;
+
+  constructor(
+    private readonly host: string,
+    private readonly port: number,
+    logger: Logger,
+    _atemFactory?: () => Atem,
+  ) {
+    this.logger = logger;
+    this.atem = _atemFactory ? _atemFactory() : new Atem();
+
+    this.atem.on("connected", () => {
+      this.handleConnected();
+    });
+
+    this.atem.on("disconnected", () => {
+      this.handleDisconnected();
+    });
+
+    this.atem.on("stateChanged", (_state: unknown, paths: string[]) => {
+      this.logger.debug(
+        { event: "atem_state_changed", paths },
+        "ATEM state changed",
+      );
+    });
+  }
+
+  /**
+   * Initiate the connection to the ATEM. Fail-open: does not await or throw (D-02).
+   */
+  connect(): void {
+    this.logger.info(
+      { event: "atem_connect_attempt", host: this.host, port: this.port },
+      "Connecting to ATEM",
+    );
+    void this.atem.connect(this.host, this.port);
+  }
+
+  /**
+   * Apply a new desired ATEM bus state from TallyOrchestrator.
+   *
+   * If not yet hydrated (ATEM 'connected' event not yet received), stores as
+   * pendingState to be flushed on hydration (D-04). Once hydrated, dispatches
+   * only changed fields via TallyStateReconciler (CORE-03, ATEM-02/03).
+   *
+   * @param newState      ResolverOutput from the tally resolver.
+   * @param tallyReceivedAt Date.now() at the moment the raw vMix TCP push arrived (REL-01).
+   */
+  applyState(newState: ResolverOutput, tallyReceivedAt: number): void {
+    if (!this.isHydrated) {
+      this.pendingState = newState;
+      return;
+    }
+    this._dispatch(newState, tallyReceivedAt);
+  }
+
+  /**
+   * Run the sequential walk-test loop (VERIFY-01).
+   *
+   * For each mapped camera: program (2 s red) → preview (2 s green) → next.
+   * Bypasses TallyStateReconciler — this is a diagnostic tool, not live tally (D-07).
+   */
+  async walkTest(mapping: MappingEntry[], logger: Logger): Promise<void> {
+    logger.info(
+      { event: "walk_test_started", cameras: mapping.length },
+      "Walk-test starting",
+    );
+
+    for (const entry of mapping) {
+      logger.info(
+        { event: "walk_program", cameraId: entry.cameraId, atemSource: entry.atemSource },
+        "Walk-test: setting program",
+      );
+      await this.atem.changeProgramInput(entry.atemSource, 0);
+      await new Promise<void>((res) => setTimeout(res, 2000));
+
+      logger.info(
+        { event: "walk_preview", cameraId: entry.cameraId, atemSource: entry.atemSource },
+        "Walk-test: setting preview",
+      );
+      await this.atem.changePreviewInput(entry.atemSource, 0);
+      await new Promise<void>((res) => setTimeout(res, 2000));
+    }
+
+    logger.info({ event: "walk_test_complete" }, "Walk-test complete");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private handlers
+  // ---------------------------------------------------------------------------
+
+  private handleConnected(): void {
+    this.logger.info(
+      { event: "atem_connected", host: this.host, port: this.port },
+      "ATEM connected",
+    );
+    this.isHydrated = true;
+
+    if (this.pendingState !== null) {
+      this.logger.info(
+        { event: "atem_pending_flush" },
+        "Flushing pending state after hydration",
+      );
+      this._dispatch(this.pendingState);
+      this.pendingState = null;
+    }
+  }
+
+  private handleDisconnected(): void {
+    this.logger.warn(
+      { event: "atem_disconnected" },
+      "ATEM disconnected",
+    );
+    this.isHydrated = false;
+    this.reconciler.reset(); // Phase 5 resync seam: next submit() will always report changed
+  }
+
+  private _dispatch(state: ResolverOutput, tallyReceivedAt?: number): void {
+    const report = this.reconciler.submit(state.bus);
+    if (!report.changed) return;
+
+    // Log BEFORE issuing commands — captures time from tally receipt to command-send (REL-01).
+    // Guard: only compute latencyMs when tallyReceivedAt is available.
+    if (tallyReceivedAt !== undefined) {
+      this.logger.info(
+        {
+          event: "atem_command_sent",
+          latencyMs: Date.now() - tallyReceivedAt,
+          program: state.bus.program,
+          preview: state.bus.preview,
+        },
+        "ATEM bus updated",
+      );
+    }
+
+    // T-04-01: null guard — never pass null to changeProgramInput/changePreviewInput.
+    // T-04-03: fire-and-forget with .catch — errors logged, never thrown (D-02 fail-open).
+    if (report.program && state.bus.program !== null) {
+      void this.atem
+        .changeProgramInput(state.bus.program, 0)
+        .catch((err: unknown) =>
+          this.logger.error({ err }, "changeProgramInput failed"),
+        );
+    }
+
+    if (report.preview && state.bus.preview !== null) {
+      void this.atem
+        .changePreviewInput(state.bus.preview, 0)
+        .catch((err: unknown) =>
+          this.logger.error({ err }, "changePreviewInput failed"),
+        );
+    }
+  }
+}
