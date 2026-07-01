@@ -1,2 +1,4 @@
-// Phase 6 Plan 03 will replace with full Svelte mount
-export {};
+import { mount } from 'svelte';
+import App from './App.svelte';
+
+mount(App, { target: document.body });

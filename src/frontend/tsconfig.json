@@ -7,9 +7,8 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "noEmit": true,
-    "rootDir": "."
+    "noEmit": true
   },
-  "include": ["./**/*.ts", "./**/*.svelte"],
+  "include": ["./**/*.ts", "./**/*.svelte", "../core/**/*.ts"],
   "exclude": []
 }
