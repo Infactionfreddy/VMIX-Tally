@@ -762,7 +762,7 @@ known trade-off per D-02; Phase 5 / SUBSCRIBE ACTS is the mitigation.
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does vMix use sparse input numbering (gaps in the number sequence)?**
    - What we know: vMix `number` attribute is documented as sequential; all examples show
@@ -771,6 +771,10 @@ known trade-off per D-02; Phase 5 / SUBSCRIBE ACTS is the mitigation.
      inputs to fill the gap, or leaves number=3 unchanged.
    - Recommendation: Capture a real `GET /api` XML response during testing to confirm.
      The `parseRosterXml` fixture should include this scenario.
+   - RESOLVED: Plans use Key-based identity (`buildRuntimeMapping` anchors on GUID, not
+     number position), so sparse numbering only affects the tally-position lookup — which
+     the SC4 regression fixture covers. Remaining risk captured in A6 assumption; confirmed
+     during Phase 4 real-hardware testing.
 
 2. **Does node-vmix's socket survive reconnect after a hard disconnect?**
    - What we know: node-vmix creates one `Socket` instance; after `close` it calls
@@ -779,10 +783,16 @@ known trade-off per D-02; Phase 5 / SUBSCRIBE ACTS is the mitigation.
      may be in an error state where `connect()` returns `ECONNRESET` or similar.
    - Recommendation: Phase 3 tests with real vMix during Phase 4 integration. Phase 5
      fully owns reconnect reliability.
+   - RESOLVED: Phase 5 owns full reconnect reliability (D-07). Phase 3 scope is
+     correct-behaviour-on-connect; node-vmix's built-in 10s auto-reconnect is acceptable
+     for Phase 3. No Phase 3 plan changes required.
 
 3. **Does pino 9.x need any special configuration for `"type": "module"` ESM projects?**
    - What we know: pino 9.x ships ESM support; should work without extra config.
    - Recommendation: Verify `import pino from 'pino'` works at first task execution.
+   - RESOLVED: pino 9.x ships full ESM support. Plan 03-02 Task 1 runs `npx tsc --noEmit`
+     immediately after install to catch any import issues in-task. No pre-planning
+     configuration required.
 
 ---
 

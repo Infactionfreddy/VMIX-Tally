@@ -38,11 +38,12 @@ created: 2026-07-01
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 03-01-01 | 01 | 1 | VMIX-03 | — | parseTallyString returns [] for empty string | unit | `npx vitest run src/vmix/tally-parser.test.ts` | ❌ W0 | ⬜ pending |
-| 03-01-02 | 01 | 1 | VMIX-03 | — | parseTallyString maps position i → input i+1 | unit | `npx vitest run src/vmix/tally-parser.test.ts` | ❌ W0 | ⬜ pending |
-| 03-01-03 | 01 | 1 | VMIX-02 | — | ConnectionTCP emits tally event on push | unit | `npx vitest run src/vmix/connection.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-01 | 02 | 1 | VMIX-01 | — | VmixIngest connects and sends SUBSCRIBE TALLY | unit | `npx vitest run src/vmix/ingest.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-02 | 02 | 1 | VMIX-02 | — | SUBSCRIBE TALLY re-sent after reconnect | unit | `npx vitest run src/vmix/ingest.test.ts` | ❌ W0 | ⬜ pending |
+| 03-01-01 | 01 | 1 | VMIX-03 | — | parseTallyString returns [] for empty string | unit | `npx vitest run src/vmix/parseTallyString.test.ts` | ❌ W0 | ⬜ pending |
+| 03-01-02 | 01 | 1 | VMIX-03 | — | parseTallyString maps position i → input i+1 | unit | `npx vitest run src/vmix/parseTallyString.test.ts` | ❌ W0 | ⬜ pending |
+| 03-01-03 | 01 | 1 | VMIX-03 | — | parseRosterXml extracts key+number from XML | unit | `npx vitest run src/vmix/parseRosterXml.test.ts` | ❌ W0 | ⬜ pending |
+| 03-01-04 | 01 | 1 | VMIX-03 | — | buildRuntimeMapping: Key-reorder does not shift tally | unit | `npx vitest run src/vmix/buildRuntimeMapping.test.ts` | ❌ W0 | ⬜ pending |
+| 03-02-01 | 02 | 2 | VMIX-01 | — | VmixConnector connects and emits tally event | unit | `npx vitest run src/vmix/VmixConnector.test.ts` | ❌ W0 | ⬜ pending |
+| 03-02-02 | 02 | 2 | VMIX-02 | — | SUBSCRIBE TALLY re-sent after reconnect | unit | `npx vitest run src/vmix/VmixConnector.test.ts` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -50,9 +51,10 @@ created: 2026-07-01
 
 ## Wave 0 Requirements
 
-- [ ] `src/vmix/tally-parser.test.ts` — RED stubs for VMIX-03 (parseTallyString)
-- [ ] `src/vmix/ingest.test.ts` — RED stubs for VMIX-01, VMIX-02 (connect + subscribe)
-- [ ] `src/vmix/connection.test.ts` — RED stubs for VMIX-02 (tally push event)
+- [ ] `src/vmix/parseTallyString.test.ts` — RED stubs for VMIX-03 (parseTallyString)
+- [ ] `src/vmix/parseRosterXml.test.ts` — RED stubs for VMIX-03 (parseRosterXml)
+- [ ] `src/vmix/buildRuntimeMapping.test.ts` — RED stubs for VMIX-03 (Key-reorder regression)
+- [ ] `src/vmix/VmixConnector.test.ts` — RED stubs for VMIX-01, VMIX-02 (connect + subscribe + reconnect)
 
 *Vitest is already installed (see package.json).*
 
