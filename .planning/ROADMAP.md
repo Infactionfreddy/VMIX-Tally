@@ -59,7 +59,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. When the vMix operator takes an input live or to preview, the server receives the push and the Core's live layer updates in real time (no polling).
   3. Each tally string position resolves to a stable vMix input Number/Key; the parser strips the `TALLY OK ` prefix correctly and passes captured-string regression tests (incl. empty roster and reorder/delete).
   4. Adding or deleting a vMix input mid-session does not shift tally to the wrong camera.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 03-01-PLAN.md — Pure-function contracts (parseTallyString, parseRosterXml, buildRuntimeMapping) + vmixHttpPort schema extension
+- [ ] 03-02-PLAN.md — Install node-vmix + pino; VmixConnector EventEmitter (TCP + HTTP roster, typed events)
+- [ ] 03-03-PLAN.md — tallyOrchestrator wiring VmixConnector → resolve → in-memory ResolverOutput + pino logging
 
 ### Phase 4: ATEM Output + Walk-Test (end-to-end MVP slice)
 **Goal**: Close the hot path — a vMix take lights the correct real Blackmagic camera red (and preview green) via cut-only ATEM bus control — and ship the walk-test that validates the Camera-ID chain.
@@ -109,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Core Resolver + Tally State Spine | 3/3 | Complete   | 2026-06-29 |
 | 2. Config Persistence + Mapping Model | 1/3 | In Progress|  |
-| 3. vMix Live Ingest | 0/TBD | Not started | - |
+| 3. vMix Live Ingest | 0/3 | Not started | - |
 | 4. ATEM Output + Walk-Test | 0/TBD | Not started | - |
 | 5. Reliability — Reconnect + Resync | 0/TBD | Not started | - |
 | 6. Web UI — Status then Control | 0/TBD | Not started | - |
