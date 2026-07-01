@@ -147,11 +147,11 @@ Plans:
 Plans:
 **Wave 1** *(foundation — prerequisite for all other plans)*
 
-- [ ] 06-01-PLAN.md — TypeScript config split (NodeNext/bundler), Vite build setup, npm install, schema overrides extension (D-13), Wave 0 test stubs
+- [x] 06-01-PLAN.md — TypeScript config split (NodeNext/bundler), Vite build setup, npm install, schema overrides extension (D-13), Wave 0 test stubs
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 06-02-PLAN.md — Fastify server expansion: @fastify/static + @fastify/websocket plugins, CSRF hook, broadcast helper, WS route, connection status tracking, all REST routes (/overrides, /config, /test, /vmix/roster)
+- [x] 06-02-PLAN.md — Fastify server expansion: @fastify/static + @fastify/websocket plugins, CSRF hook, broadcast helper, WS route, connection status tracking, all REST routes (/overrides, /config, /test, /vmix/roster)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -175,4 +175,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. vMix Live Ingest | 3/3 | Complete   | 2026-07-01 |
 | 4. ATEM Output + Walk-Test | 2/2 | Complete   | 2026-07-01 |
 | 5. Reliability — Reconnect + Resync | 2/2 | Complete   | 2026-07-01 |
-| 6. Web UI — Status then Control | 0/4 | Not started | - |
+| 6. Web UI — Status then Control | 2/4 | In Progress|  |

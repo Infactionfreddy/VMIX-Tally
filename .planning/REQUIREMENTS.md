@@ -40,11 +40,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Web UI
 
-- [ ] **UI-01**: Nutzer kann vMix- und ATEM-Verbindungseinstellungen (IP/Port) in der Weboberfläche konfigurieren
-- [ ] **UI-02**: Nutzer sieht den Echtzeit-Verbindungsstatus/-Health für vMix und ATEM
-- [ ] **UI-03**: Nutzer sieht ein Echtzeit-Dashboard, welche Kamera gerade rot/grün ist
-- [ ] **UI-04**: Nutzer kann das Tally für eine einzelne Kamera manuell forcieren (sticky, visuell abgesetzt, wieder lösbar)
-- [ ] **UI-05**: Nutzer sieht einen Latenz-/Aktualitäts-Indikator für die Tally-Pipeline
+- [x] **UI-01**: Nutzer kann vMix- und ATEM-Verbindungseinstellungen (IP/Port) in der Weboberfläche konfigurieren
+- [x] **UI-02**: Nutzer sieht den Echtzeit-Verbindungsstatus/-Health für vMix und ATEM
+- [x] **UI-03**: Nutzer sieht ein Echtzeit-Dashboard, welche Kamera gerade rot/grün ist
+- [x] **UI-04**: Nutzer kann das Tally für eine einzelne Kamera manuell forcieren (sticky, visuell abgesetzt, wieder lösbar)
+- [x] **UI-05**: Nutzer sieht einen Latenz-/Aktualitäts-Indikator für die Tally-Pipeline
 
 ### Reliability
 
@@ -101,11 +101,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REL-01 | Phase 4 | Pending |
 | VMIX-04 | Phase 5 | Pending |
 | ATEM-04 | Phase 5 | Pending |
-| UI-01 | Phase 6 | Pending |
-| UI-02 | Phase 6 | Pending |
-| UI-03 | Phase 6 | Pending |
-| UI-04 | Phase 6 | Pending |
-| UI-05 | Phase 6 | Pending |
+| UI-01 | Phase 6 | Complete |
+| UI-02 | Phase 6 | Complete |
+| UI-03 | Phase 6 | Complete |
+| UI-04 | Phase 6 | Complete |
+| UI-05 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 22 total
