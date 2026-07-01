@@ -1,7 +1,8 @@
 ---
 phase: 6
 slug: web-ui-status-then-control
-status: draft
+status: approved
+reviewed_at: 2026-07-01
 shadcn_initialized: false
 preset: none
 created: 2026-07-01
