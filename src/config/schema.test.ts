@@ -466,3 +466,39 @@ describe("D-08 Phase3 — vmixHttpPort backward-compatible schema extension", ()
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Phase 6 D-13: overrides field backward-compatible schema extension
+//
+// overrides is an optional field on the top-level schema.
+// Key: cameraId string. Value: 'program' | 'preview'.
+// Absence = no overrides active (backward-compatible with Phase 1–5 configs).
+// null is NOT a valid value — null means "no override" = absence of the key.
+// ---------------------------------------------------------------------------
+
+describe("overrides field (Phase 6 D-13)", () => {
+  it("absent overrides field is valid (backward-compat)", () => {
+    const result = schema.safeParse(structuredClone(baseConfig));
+    expect(result.success).toBe(true);
+  });
+  it("overrides with valid value 'program' is valid", () => {
+    const cfg = { ...structuredClone(baseConfig), overrides: { cam1: 'program' } };
+    const result = schema.safeParse(cfg);
+    expect(result.success).toBe(true);
+  });
+  it("overrides with valid value 'preview' is valid", () => {
+    const cfg = { ...structuredClone(baseConfig), overrides: { cam1: 'preview' } };
+    const result = schema.safeParse(cfg);
+    expect(result.success).toBe(true);
+  });
+  it("overrides with invalid value is rejected", () => {
+    const cfg = { ...structuredClone(baseConfig), overrides: { cam1: 'live' } };
+    const result = schema.safeParse(cfg);
+    expect(result.success).toBe(false);
+  });
+  it("overrides with null value is rejected (null means absent key, not stored null)", () => {
+    const cfg = { ...structuredClone(baseConfig), overrides: { cam1: null } };
+    const result = schema.safeParse(cfg);
+    expect(result.success).toBe(false);
+  });
+});
