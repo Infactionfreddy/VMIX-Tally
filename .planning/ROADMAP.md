@@ -155,7 +155,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 06-03-PLAN.md — Status dashboard frontend: state store, App WS lifecycle, Header, DisconnectBanner, OverrideBanner, TallyGrid, CameraCard, TallyBadge, ConnectionBadge, LatencyReadout
+- [x] 06-03-PLAN.md — Status dashboard frontend: state store, App WS lifecycle, Header, DisconnectBanner, OverrideBanner, TallyGrid, CameraCard, TallyBadge, ConnectionBadge, LatencyReadout
 
 **Wave 4** *(blocked on Wave 3)*
 
@@ -175,4 +175,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. vMix Live Ingest | 3/3 | Complete   | 2026-07-01 |
 | 4. ATEM Output + Walk-Test | 2/2 | Complete   | 2026-07-01 |
 | 5. Reliability — Reconnect + Resync | 2/2 | Complete   | 2026-07-01 |
-| 6. Web UI — Status then Control | 2/4 | In Progress|  |
+| 6. Web UI — Status then Control | 3/4 | In Progress|  |
