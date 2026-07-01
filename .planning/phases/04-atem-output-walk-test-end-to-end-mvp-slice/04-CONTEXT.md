@@ -67,10 +67,16 @@ latency dashboard (Phase 6 UI-05).
   needed.
 
 - **D-06:** The walk-test runs **sequentially**: for each mapped camera in config
-  order, call `changeProgramInput(0, atemSource)` → wait ~2 s → next camera. After
-  all cameras have been visited, the last camera stays on program (operator resets
-  manually). The route handler responds `202 Accepted` immediately; the walk runs
-  asynchronously while the server logs each step.
+  order: `changeProgramInput(0, atemSource)` → wait ~2 s (red) →
+  `changePreviewInput(0, atemSource)` → wait ~2 s (green) → next camera. After
+  all cameras, the last camera stays on preview (operator resets manually in vMix).
+  The route handler responds `202 Accepted` immediately; the walk runs
+  asynchronously while the server logs each step via pino.
+
+- **D-11:** If `GET /walk-test` is called while a walk-test is already running,
+  the server responds **`409 Conflict`** with `{ error: 'walk-test already running' }`.
+  An `isWalkRunning` boolean flag in the handler prevents concurrent runs and
+  parallel ATEM command conflicts.
 
 - **D-07:** The walk-test **bypasses the `TallyStateReconciler`** — it calls
   `AtemConnector.walkTest()` directly, which issues `changeProgramInput` without
@@ -211,6 +217,10 @@ latency dashboard (Phase 6 UI-05).
   control surface.
 - **`GET /metrics` endpoint for p50/p95** — nice-to-have, deferred. Phase 4 scans
   logs manually; Phase 6 UI-05 may expose this.
+- **Per-camera UI menu for individual Program/Preview testing** — user-requested in
+  discussion: a web UI where the operator picks a specific camera and switches it to
+  Program or Preview individually for verification. Belongs in Phase 6 (requires UI
+  interaction beyond a simple REST endpoint). Note for Phase 6 planning.
 
 None of the above is in Phase 4 scope — discussion stayed within the ATEM output +
 walk-test boundary.
