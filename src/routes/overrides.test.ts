@@ -30,7 +30,10 @@ async function buildTestApp(
   broadcast: ReturnType<typeof vi.fn>,
 ): Promise<FastifyInstance> {
   const app = Fastify();
-  await app.register(registerOverridesRoute, { configStore, broadcast });
+  await app.register(registerOverridesRoute, {
+    configStore,
+    broadcast: broadcast as unknown as () => void,
+  });
   return app;
 }
 

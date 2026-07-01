@@ -142,6 +142,8 @@ export class VmixConnector extends EventEmitter {
       );
       sock.write("SUBSCRIBE TALLY\r\n");
       void this.fetchAndEmitRoster();
+      // Phase 6 UI-02: signal connection status to server.ts
+      this.emit("ready");
     });
 
     sock.on("data", (chunk: Buffer) => {
@@ -169,6 +171,8 @@ export class VmixConnector extends EventEmitter {
         { host: this.host },
         "vmix TCP closed — scheduling reconnect",
       );
+      // Phase 6 UI-02: signal disconnection BEFORE scheduling reconnect
+      this.emit("disconnected");
       this.scheduleReconnect();
     });
   }

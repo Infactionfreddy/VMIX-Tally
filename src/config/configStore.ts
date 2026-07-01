@@ -84,6 +84,29 @@ export class ConfigStore {
   }
 
   // ---------------------------------------------------------------------------
+  // Async read/write interface (Phase 6 REST route API)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Return the full persisted config document asynchronously.
+   * Phase 6 route handlers use this for read-then-modify-then-write patterns.
+   */
+  async read(): Promise<PersistedConfig> {
+    return structuredClone(this.db.data ?? structuredClone(DEFAULTS));
+  }
+
+  /**
+   * Write a pre-validated config document directly to disk.
+   * NOTE: bypasses schema validation — callers are responsible for validating
+   * via schema.safeParse before calling this (route handlers do this).
+   * For validation-gated writes, use save() instead.
+   */
+  async write(cfg: PersistedConfig): Promise<void> {
+    this.db.data = structuredClone(cfg);
+    await this.db.write();
+  }
+
+  // ---------------------------------------------------------------------------
   // Whole-document save (validate-before-write, D-10)
   // ---------------------------------------------------------------------------
 

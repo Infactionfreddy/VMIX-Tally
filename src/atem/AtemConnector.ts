@@ -173,6 +173,8 @@ export class AtemConnector extends EventEmitter {
       { event: "atem_disconnected" },
       "ATEM disconnected — scheduling reconnect",
     );
+    // Phase 6 UI-02: signal disconnection BEFORE scheduling reconnect
+    this.emit("disconnected");
     this.scheduleReconnect(); // D-01: backoff starts on every disconnect
   }
 
