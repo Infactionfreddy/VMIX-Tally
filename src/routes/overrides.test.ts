@@ -33,6 +33,7 @@ async function buildTestApp(
   await app.register(registerOverridesRoute, {
     configStore,
     broadcast: broadcast as unknown as () => void,
+    orchestrator: { reResolve: vi.fn() } as never,
   });
   return app;
 }

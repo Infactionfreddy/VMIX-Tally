@@ -9,6 +9,7 @@
 import { z } from "zod";
 import type { FastifyPluginAsync } from "fastify";
 import type { PersistedConfig } from "../config/schema.js";
+import type { TallyOrchestrator } from "../vmix/tallyOrchestrator.js";
 
 // ---------------------------------------------------------------------------
 // Minimal ConfigStore interface required by this route
@@ -26,6 +27,7 @@ interface ConfigStoreReader {
 interface OverridesRouteOptions {
   configStore: ConfigStoreReader;
   broadcast: () => void;
+  orchestrator: TallyOrchestrator;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,7 +46,7 @@ export const registerOverridesRoute: FastifyPluginAsync<OverridesRouteOptions> =
   fastify,
   options,
 ) => {
-  const { configStore, broadcast } = options;
+  const { configStore, broadcast, orchestrator } = options;
 
   fastify.put('/overrides/:cameraId', async (request, reply) => {
     const { cameraId } = request.params as { cameraId: string };
@@ -69,7 +71,9 @@ export const registerOverridesRoute: FastifyPluginAsync<OverridesRouteOptions> =
 
     await configStore.write({ ...config, overrides });
 
-    // D-07: trigger immediate WS push after override change
+    // D-07: re-resolve with new overrides so ATEM bus updates immediately,
+    // then broadcast the new snapshot to all WebSocket clients.
+    orchestrator.reResolve();
     broadcast();
 
     return reply.send({ overrides });

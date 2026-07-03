@@ -65,6 +65,7 @@ interface ConfigStoreInterface {
 interface OrchestratorInterface {
   on(event: 'stateChanged', handler: (state: ResolverOutput) => void): void;
   currentDesiredState(): ResolverOutput | null;
+  reconnectVmix?(host: string, tcpPort: number, httpPort: number): void;
 }
 
 interface VmixConnectorInterface {
@@ -75,6 +76,7 @@ interface VmixConnectorInterface {
 interface AtemConnectorInterface {
   on(event: 'ready' | 'disconnected' | string, handler: () => void): void;
   walkTest(mapping: MappingEntry[], logger: Logger): Promise<void>;
+  reconnect?(host: string, port: number): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -205,9 +207,23 @@ export function buildApp(
   // REST route plugins — registered after CSRF hook
   // ---------------------------------------------------------------------------
 
-  void app.register(registerOverridesRoute, { configStore, broadcast });
-  void app.register(registerConfigRoute, { configStore });
-  void app.register(registerTestRoute, { atemConnector: atemConnector as never });
+  void app.register(registerOverridesRoute, { configStore, broadcast, orchestrator: orchestrator as never });
+  void app.register(registerConfigRoute, {
+    configStore,
+    onSettingsChanged: (settings) => {
+      if (settings.vmix) {
+        orchestrator.reconnectVmix?.(
+          settings.vmix.host,
+          settings.vmix.port,
+          settings.vmix.vmixHttpPort ?? 8088,
+        );
+      }
+      if (settings.atem) {
+        atemConnector.reconnect?.(settings.atem.host, settings.atem.port);
+      }
+    },
+  });
+  void app.register(registerTestRoute, { atemConnector: atemConnector as never, orchestrator: orchestrator as never, configStore });
   void app.register(registerVmixRoute, { vmixConnector: vmixConnector as never });
 
   // ---------------------------------------------------------------------------
@@ -248,29 +264,47 @@ export function buildApp(
   });
 
   // ---------------------------------------------------------------------------
-  // Connection status tracking — Pattern 4 from RESEARCH.md
-  // vmixConnector 'ready'/'disconnected' events (added in this plan)
-  // atemConnector 'ready' (existing), 'disconnected' (added in this plan)
+  // Connection status tracking with disconnect debounce.
+  //
+  // Brief TCP blips (< 400 ms) are swallowed: if 'ready' fires before the timer
+  // expires the UI never sees a 'disconnected' state. This prevents the red
+  // DisconnectBanner from flashing on momentary reconnect cycles.
   // ---------------------------------------------------------------------------
 
+  const disconnectTimers: { vmix?: ReturnType<typeof setTimeout>; atem?: ReturnType<typeof setTimeout> } = {};
+
   vmixConnector.on('ready', () => {
+    if (disconnectTimers.vmix !== undefined) {
+      clearTimeout(disconnectTimers.vmix);
+      delete disconnectTimers.vmix;
+    }
     connStatus.vmix = 'connected';
     broadcast();
   });
 
   vmixConnector.on('disconnected', () => {
-    connStatus.vmix = 'disconnected';
-    broadcast();
+    disconnectTimers.vmix = setTimeout(() => {
+      delete disconnectTimers.vmix;
+      connStatus.vmix = 'disconnected';
+      broadcast();
+    }, 400);
   });
 
   atemConnector.on('ready', () => {
+    if (disconnectTimers.atem !== undefined) {
+      clearTimeout(disconnectTimers.atem);
+      delete disconnectTimers.atem;
+    }
     connStatus.atem = 'connected';
     broadcast();
   });
 
   atemConnector.on('disconnected', () => {
-    connStatus.atem = 'disconnected';
-    broadcast();
+    disconnectTimers.atem = setTimeout(() => {
+      delete disconnectTimers.atem;
+      connStatus.atem = 'disconnected';
+      broadcast();
+    }, 400);
   });
 
   // ---------------------------------------------------------------------------

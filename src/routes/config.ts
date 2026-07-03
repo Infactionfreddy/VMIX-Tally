@@ -25,6 +25,7 @@ interface ConfigStoreReader {
 
 interface ConfigRouteOptions {
   configStore: ConfigStoreReader;
+  onSettingsChanged?: (settings: PersistedConfig['settings']) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -35,7 +36,7 @@ export const registerConfigRoute: FastifyPluginAsync<ConfigRouteOptions> = async
   fastify,
   options,
 ) => {
-  const { configStore } = options;
+  const { configStore, onSettingsChanged } = options;
 
   // GET /config/settings — return current connection settings
   fastify.get('/config/settings', async (_request, reply) => {
@@ -52,6 +53,7 @@ export const registerConfigRoute: FastifyPluginAsync<ConfigRouteOptions> = async
       return reply.code(400).send(toConfigValidationError(result.error));
     }
     await configStore.write(result.data);
+    onSettingsChanged?.(result.data.settings);
     return reply.send({ settings: result.data.settings });
   });
 

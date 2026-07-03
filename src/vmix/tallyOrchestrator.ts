@@ -68,6 +68,12 @@ export interface ConfigStoreReader {
    * Returns null if settings have not been configured yet (first boot).
    */
   getVmixSettings(): { host: string; port: number; vmixHttpPort?: number } | null;
+
+  /**
+   * Return per-camera sticky overrides synchronously.
+   * Keys are cameraId strings; values are 'program' | 'preview'.
+   */
+  getOverrides(): Record<string, 'program' | 'preview'>;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +103,7 @@ export class TallyOrchestrator extends EventEmitter {
   private readonly configStore: ConfigStoreReader;
   private readonly logger: Logger;
   private currentState: ResolverOutput | null = null;
+  private lastTallyData: TallyEventData | null = null;
 
   constructor(
     configStore: ConfigStoreReader,
@@ -150,6 +157,7 @@ export class TallyOrchestrator extends EventEmitter {
    * EventEmitter's default 'error' behavior and crash the process).
    */
   private handleTally(data: TallyEventData): void {
+    this.lastTallyData = data;
     try {
       // Step 1: Read persisted mapping synchronously (in-memory, no disk I/O in hot path).
       const persisted: PersistedMappingEntry[] = this.configStore.getMapping();
@@ -160,25 +168,30 @@ export class TallyOrchestrator extends EventEmitter {
         this.connector.roster(),
       );
 
-      // Step 3: Resolve tally → ResolverOutput.
-      // Overrides are always [] in Phase 3 (Phase 6 owns override UI).
+      // Step 3: Convert persisted overrides Record → OverrideEntry[] for the resolver.
+      const rawOverrides = this.configStore.getOverrides();
+      const overrides: OverrideEntry[] = Object.entries(rawOverrides).map(
+        ([cameraId, force]) => ({ cameraId, force }),
+      );
+
+      // Step 4: Resolve tally → ResolverOutput.
       const newState: ResolverOutput = resolve(
         data.rawTally,
         runtimeMapping,
-        [] as OverrideEntry[],
+        overrides,
       );
 
-      // Step 4: Check if bus state actually changed (avoid noisy log on identical pushes).
+      // Step 5: Check if bus state actually changed (avoid noisy log on identical pushes).
       const prev = this.currentState;
       const busChanged =
         prev === null ||
         prev.bus.program !== newState.bus.program ||
         prev.bus.preview !== newState.bus.preview;
 
-      // Step 5: Store new state.
+      // Step 6: Store new state.
       this.currentState = newState;
 
-      // Step 6: Log the change via pino (structured JSON to stdout).
+      // Step 7: Log the change via pino (structured JSON to stdout).
       if (busChanged) {
         this.logger.info(
           {
@@ -199,7 +212,7 @@ export class TallyOrchestrator extends EventEmitter {
         );
       }
 
-      // Step 7: Emit 'stateChanged' with a copy of the new state for Phase 4 subscribers.
+      // Step 8: Emit 'stateChanged' with a copy of the new state for Phase 4 subscribers.
       // Spread-copy each field to prevent the subscriber from mutating internal state.
       const stateCopy: ResolverOutput = {
         cameras: { ...newState.cameras },
@@ -225,6 +238,30 @@ export class TallyOrchestrator extends EventEmitter {
    */
   currentDesiredState(): ResolverOutput | null {
     return this.currentState;
+  }
+
+  /**
+   * Re-run the resolver with the last received tally data and current overrides.
+   * Called after override changes so the ATEM bus is updated immediately without
+   * waiting for the next vMix tally push.
+   * No-op if no tally event has been received yet.
+   */
+  reResolve(): void {
+    if (this.lastTallyData !== null) {
+      this.handleTally(this.lastTallyData);
+    } else {
+      // vMix not connected yet — synthesize empty tally so overrides still take effect.
+      this.handleTally({ rawTally: [], rosterLength: 0 });
+    }
+  }
+
+  /**
+   * Switch the vMix connection to a new host/port without restarting the server.
+   * Delegates to VmixConnector.reconnect() which tears down and re-establishes the
+   * TCP connection and re-fetches the roster automatically on reconnect.
+   */
+  reconnectVmix(host: string, tcpPort: number, httpPort: number): void {
+    this.connector.reconnect(host, tcpPort, httpPort);
   }
 
   /**

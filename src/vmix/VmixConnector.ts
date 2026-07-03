@@ -69,9 +69,9 @@ export class VmixConnector extends EventEmitter {
   private currentRosterLength: number = -1;
 
   constructor(
-    private readonly host: string,
-    private readonly tcpPort: number,
-    private readonly httpPort: number,
+    private host: string,
+    private tcpPort: number,
+    private httpPort: number,
     private readonly logger: Logger,
   ) {
     super();
@@ -295,5 +295,37 @@ export class VmixConnector extends EventEmitter {
    */
   shutdown(): void {
     this.destroy();
+  }
+
+  /**
+   * Switch to a new vMix host/port without restarting the server.
+   * Tears down the current connection, updates the target address, and reconnects.
+   */
+  reconnect(host: string, tcpPort: number, httpPort: number): void {
+    // Stop current connection and cancel any pending retry timer.
+    if (this.retryTimer !== null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.socket?.destroy();
+
+    // Reset all state for a clean start.
+    this.destroyed = false;
+    this.attempt = 0;
+    this.currentRosterLength = -1;
+    this.rosterMap = new Map();
+    this.lineBuffer = '';
+
+    this.host = host;
+    this.tcpPort = tcpPort;
+    this.httpPort = httpPort;
+
+    if (host.length < 3) {
+      this.logger.warn({ host }, 'VmixConnector.reconnect: host too short — not connecting');
+      return;
+    }
+
+    this.logger.info({ host, tcpPort }, 'VmixConnector: reconnecting to new host');
+    this.createSocket();
   }
 }

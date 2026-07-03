@@ -66,7 +66,14 @@ console.log('Starting: vMix simulator, ATEM simulator, tally server\n');
 
 // Give simulators 300 ms head-start before the server tries to connect
 const vmix   = spawnProcess('vmix',   'node', ['scripts/vmix-simulator.mjs']);
-const atem   = spawnProcess('atem',   'node', ['scripts/atem-simulator.mjs']);
+// tools/atem-simulator: full session state-machine, 20-byte HelloResponse,
+// retransmit logic, minimal topology — works with atem-connection AND ATEM SC.
+const atem   = spawnProcess('atem',   'node', [
+  'tools/atem-simulator/index.js',
+  '--inputs', '8',
+  '--port', '9910',
+  '--web', 'false',   // disable built-in web view; we have our own at :3000
+], { env: { ...process.env, DEBUG_ATEM: '1' } });
 
 setTimeout(() => {
   const server = spawnProcess('server', 'npx', ['tsx', 'src/server.ts']);

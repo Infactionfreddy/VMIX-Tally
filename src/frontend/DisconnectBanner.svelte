@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade, fly } from 'svelte/transition';
   import { bridgeState } from './state.svelte.js';
 
   let hasDisconnect = $derived(
@@ -8,7 +9,12 @@
 </script>
 
 {#if hasDisconnect}
-  <div class="banner" aria-live="assertive">
+  <div
+    class="banner"
+    aria-live="assertive"
+    in:fly={{ y: -12, duration: 250 }}
+    out:fade={{ duration: 200 }}
+  >
     {#if bridgeState.connections.vmix === 'disconnected'}
       <p>vMix getrennt — Tally-Daten möglicherweise veraltet</p>
     {/if}

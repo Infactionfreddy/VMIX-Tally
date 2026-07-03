@@ -41,8 +41,8 @@ export class AtemConnector extends EventEmitter {
   private needsResync = false;
 
   constructor(
-    private readonly host: string,
-    private readonly port: number,
+    private host: string,
+    private port: number,
     logger: Logger,
     _atemFactory?: () => Atem,
   ) {
@@ -93,6 +93,57 @@ export class AtemConnector extends EventEmitter {
       return;
     }
     this._dispatch(newState, tallyReceivedAt);
+  }
+
+  /**
+   * Directly set ATEM program input — bypasses reconciler (used by test route).
+   * No-op when not hydrated.
+   */
+  setProgram(atemSource: number): void {
+    if (!this.isHydrated) return;
+    void this.atem
+      .changeProgramInput(atemSource, 0)
+      .catch((err: unknown) => this.logger.error({ err }, 'setProgram failed'));
+  }
+
+  /**
+   * Directly set ATEM preview input — bypasses reconciler (used by test route).
+   * No-op when not hydrated.
+   */
+  setPreview(atemSource: number): void {
+    if (!this.isHydrated) return;
+    void this.atem
+      .changePreviewInput(atemSource, 0)
+      .catch((err: unknown) => this.logger.error({ err }, 'setPreview failed'));
+  }
+
+  /**
+   * Re-apply the desired state after a test — resets the reconciler so the
+   * ATEM always receives the commands even if desired state hasn't changed.
+   */
+  resetAndApply(state: ResolverOutput): void {
+    if (!this.isHydrated) return;
+    this.reconciler.reset();
+    this._dispatch(state);
+  }
+
+  /**
+   * Switch to a new ATEM host/port without restarting the server.
+   * Cancels any pending retry timer, resets state, and connects to the new address.
+   */
+  reconnect(host: string, port: number): void {
+    if (this.retryTimer !== null) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    this.host = host;
+    this.port = port;
+    this.isHydrated = false;
+    this.pendingState = null;
+    this.attempt = 0;
+    this.needsResync = false;
+    this.logger.info({ event: 'atem_reconnect', host, port }, 'ATEM reconnecting to new host');
+    void this.atem.connect(host, port);
   }
 
   /**
@@ -253,7 +304,10 @@ export class AtemConnector extends EventEmitter {
     );
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null;
-      if (!this.destroyed) {
+      // Guard: skip if already hydrated — atem-connection calls disconnect() internally
+      // when connect() is called while connected, which would fire handleDisconnected()
+      // again and create an infinite reconnect loop on real ATEM hardware.
+      if (!this.destroyed && !this.isHydrated) {
         void this.atem.connect(this.host, this.port).catch((err: unknown) => {
           this.logger.warn({ err }, "ATEM connect() rejected");
         });

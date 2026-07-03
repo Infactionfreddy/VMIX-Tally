@@ -54,6 +54,7 @@ function makeMockOrchestrator() {
   return {
     on: vi.fn(),
     currentDesiredState: vi.fn().mockReturnValue(null),
+    reResolve: vi.fn(),
   };
 }
 

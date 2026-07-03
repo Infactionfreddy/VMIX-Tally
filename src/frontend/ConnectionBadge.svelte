@@ -34,6 +34,7 @@
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
+    transition: background 0.3s ease;
   }
   .label {
     font-weight: 700;
