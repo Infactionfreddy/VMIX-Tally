@@ -14,6 +14,7 @@
   let vmixHost = $state(initialSettings?.vmix?.host ?? '');
   let vmixPort = $state(initialSettings?.vmix?.port ?? 8099);
   let atemHost = $state(initialSettings?.atem?.host ?? '');
+  let atemPort = $state(initialSettings?.atem?.port ?? 9910);
   let errorMsg = $state('');
 
   // $state initializes from props at creation time only; re-sync when the async fetch resolves.
@@ -24,6 +25,7 @@
     }
     if (initialSettings?.atem) {
       atemHost = initialSettings.atem.host ?? '';
+      atemPort = initialSettings.atem.port ?? 9910;
     }
   });
 
@@ -34,7 +36,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           vmix: { host: vmixHost, port: Number(vmixPort) },
-          atem: { host: atemHost, port: 9910 },
+          atem: { host: atemHost, port: Number(atemPort) },
         }),
       });
       if (res.ok) {
@@ -89,6 +91,17 @@
           class="input"
           bind:value={atemHost}
           placeholder="192.168.1.20"
+        />
+      </div>
+      <div class="field">
+        <label class="label" for="atem-port">ATEM Port</label>
+        <input
+          id="atem-port"
+          type="number"
+          class="input input-port"
+          bind:value={atemPort}
+          min="1"
+          max="65535"
         />
       </div>
     </div>
