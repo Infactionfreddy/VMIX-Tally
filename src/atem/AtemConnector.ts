@@ -39,6 +39,7 @@ export class AtemConnector extends EventEmitter {
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
   private needsResync = false;
+  private suppressNextDisconnect = false;
 
   constructor(
     private host: string,
@@ -142,6 +143,12 @@ export class AtemConnector extends EventEmitter {
     this.pendingState = null;
     this.attempt = 0;
     this.needsResync = false;
+    this.destroyed = false;
+    // atem-connection's connect() internally calls restartConnection(), which — when the
+    // socket is already Established — synthesizes a 'disconnected' event before the new
+    // connection is established. Suppress exactly that one synthetic event so it doesn't
+    // spawn a redundant, racing scheduleReconnect() timer against the connect() below.
+    this.suppressNextDisconnect = true;
     this.logger.info({ event: 'atem_reconnect', host, port }, 'ATEM reconnecting to new host');
     void this.atem.connect(host, port);
   }
@@ -196,6 +203,7 @@ export class AtemConnector extends EventEmitter {
 
   private handleConnected(): void {
     this.isHydrated = true;
+    this.suppressNextDisconnect = false;
     this.attempt = 0; // reset backoff counter on successful connect (ATEM-04)
     this.logger.info(
       { event: "atem_hydrated", host: this.host },
@@ -220,6 +228,14 @@ export class AtemConnector extends EventEmitter {
 
   private handleDisconnected(): void {
     this.isHydrated = false;
+    if (this.suppressNextDisconnect) {
+      this.suppressNextDisconnect = false;
+      this.logger.debug(
+        { event: 'atem_disconnected_suppressed' },
+        'ATEM disconnected (synthetic event from reconnect()) — not scheduling redundant reconnect',
+      );
+      return;
+    }
     this.logger.warn(
       { event: "atem_disconnected" },
       "ATEM disconnected — scheduling reconnect",

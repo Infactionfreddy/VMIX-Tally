@@ -392,5 +392,41 @@ describe("AtemConnector", () => {
       vi.advanceTimersByTime(1);
       expect(mockAtem.connect).toHaveBeenCalledTimes(3); // new call at 1000ms → attempt was 0
     });
+
+    it("T11: reconnect() while hydrated suppresses the internal synthetic 'disconnected' event and does not schedule a redundant reconnect", () => {
+      // Hydrate on the original host
+      emit("connected");
+      vi.clearAllMocks();
+
+      // Operator changes ATEM host/port while already connected
+      connector.reconnect("192.168.1.200", 9910);
+      expect(mockAtem.connect).toHaveBeenCalledWith("192.168.1.200", 9910);
+      expect(mockAtem.connect).toHaveBeenCalledTimes(1);
+
+      // Simulate atem-connection's internal restartConnection() behavior: calling
+      // connect() while Established synchronously triggers a synthetic 'disconnected'
+      // event before the new connection is established.
+      emit("disconnected");
+
+      // The synthetic disconnect must be suppressed: no redundant scheduleReconnect()
+      // timer should have been started, so advancing all timers must not produce any
+      // further connect() calls beyond the one reconnect() already issued.
+      vi.runAllTimers();
+      expect(mockAtem.connect).toHaveBeenCalledTimes(1);
+    });
+
+    it("T13: reconnect() resets destroyed so a connector can reconnect after destroy()", () => {
+      connector.destroy();
+      connector.reconnect("192.168.1.200", 9910);
+      emit("connected"); // new host hydrates — also clears suppressNextDisconnect
+      vi.clearAllMocks();
+
+      // A genuine disconnect after this point must schedule a normal backoff reconnect —
+      // if `destroyed` were still true (pre-fix bug), scheduleReconnect()'s guard would
+      // silently no-op forever.
+      emit("disconnected");
+      vi.runAllTimers();
+      expect(mockAtem.connect).toHaveBeenCalledTimes(1);
+    });
   });
 });
