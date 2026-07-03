@@ -197,8 +197,16 @@ export function buildApp(
         return reply.code(403).send({ error: 'CSRF: cross-origin request rejected' });
       }
       const origin = request.headers['origin'];
-      if (origin && !origin.startsWith(`http://${request.hostname}`)) {
-        return reply.code(403).send({ error: 'CSRF: invalid origin' });
+      if (origin) {
+        let originHostname: string;
+        try {
+          originHostname = new URL(origin).hostname;
+        } catch {
+          return reply.code(403).send({ error: 'CSRF: invalid origin' });
+        }
+        if (originHostname !== request.hostname) {
+          return reply.code(403).send({ error: 'CSRF: invalid origin' });
+        }
       }
     }
   });

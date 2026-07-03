@@ -374,4 +374,62 @@ describe('CSRF hook (security)', () => {
 
     expect(response.statusCode).toBe(200);
   });
+
+  it('rejects PUT /overrides with subdomain-spoofed Origin (bypass attempt) with 403', async () => {
+    const mockAtem = makeMockAtem();
+    const mockVmix = makeMockVmix();
+    const mockOrchestrator = makeMockOrchestrator();
+    const mockConfigStore = makeMockConfigStore();
+    const app = buildApp(
+      mockAtem as never,
+      mockOrchestrator as never,
+      mockVmix as never,
+      mockConfigStore as never,
+      sampleMapping,
+      mockLogger,
+    );
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PUT',
+      url: '/overrides/cam1',
+      headers: {
+        'sec-fetch-site': 'none',
+        origin: 'http://localhost.attacker.com',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ state: 'program' }),
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('accepts PUT /overrides with exact same-origin Origin header with 200', async () => {
+    const mockAtem = makeMockAtem();
+    const mockVmix = makeMockVmix();
+    const mockOrchestrator = makeMockOrchestrator();
+    const mockConfigStore = makeMockConfigStore();
+    const app = buildApp(
+      mockAtem as never,
+      mockOrchestrator as never,
+      mockVmix as never,
+      mockConfigStore as never,
+      sampleMapping,
+      mockLogger,
+    );
+    await app.ready();
+
+    const response = await app.inject({
+      method: 'PUT',
+      url: '/overrides/cam1',
+      headers: {
+        'sec-fetch-site': 'none',
+        origin: 'http://localhost:80',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ state: 'program' }),
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
 });
